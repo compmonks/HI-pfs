@@ -8,8 +8,8 @@ Your ipfs network as easy and cheap one can say Hi!
 1. Create a subdomain (recommended).\
     If you own a domain already ans want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps so we can document it here and make it accessible for others.
     - Go to CLoudflare and create an account with a free plan
-    - Add your full domain: `example.com`
-    - Skip changing name servers for now
+    - Add your full domain: `example.com` with an auto scan and check if all your entris are there. Otherwise add the missing ones manually.
+    - Follow the steps to change your DNS servers.
     - Go to DNS tab, click Add Record:
       - Type: NS
       - Name: ipfs (this makes ipfs.example.com)
@@ -21,7 +21,9 @@ Your ipfs network as easy and cheap one can say Hi!
       - Subdomain: ipfs
       - Type: NS
       - Target: Same Cloudflare name servers as above
-  This delegates `ipfs.example.com` to Cloudflare while keeping the rest of your domain on your domain provider.
+
+This delegates `ipfs.example.com` to Cloudflare while keeping the rest of your domain on your domain provider.
+Wait for Cloudflare to have propagated the changes and check that your website and emails are working.
 
 
 
