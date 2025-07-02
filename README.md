@@ -27,11 +27,13 @@ Your ipfs network as easy and cheap one can say Hi!
       - Type: `NS`
       - Target: Same Cloudflare name servers as above (eg. `ipfs.ns.cloudflare.com`)
 
-This delegates `ipfs.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider.
-Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
+   This delegates `ipfs.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider.
+   Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your    domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
 
-Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
+   Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
 
+   **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**
+   If that's the case, you will need to troubleshoot this as it depends of your setup.
 
 2. Create tunneling on your PI
 
