@@ -35,7 +35,7 @@ Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **F
 
 2. Create tunneling on your PI
 
-   - download cloudlfared on your PI\
+   - download cloudlfared on your PI (check the Github URL, it could have changed)\
       `curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb -o cloudflared.deb`
    - install\
       `sudo dpkg -i cloudflared.deb`
