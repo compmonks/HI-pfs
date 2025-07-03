@@ -1,5 +1,5 @@
 # HI-pfs
-**Your ipfs network as easy and cheap one can say Hi!**
+**Your ipfs network as easy and cheap one can say Hi!**\
 Hi-pfs is an open, free and community-driven projects to enable as many creatives as possible to store and distribute their digital assets at their advantage. Join if you feel like that's needed!
 
 ## Requirements
