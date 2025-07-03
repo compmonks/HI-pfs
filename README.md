@@ -12,7 +12,8 @@ Your ipfs network as easy and cheap one can say Hi!
 
    **CLOUDFLARE SETUP**
     - Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
-    - Add your full domain name: `yourdomain.com` with an auto scan and check if all your DNS entries are there. Otherwise add the missing ones manually.
+    - Add your full domain name: `yourdomain.com` with an auto scan and **check if all your DNS entries are there**. Otherwise add the missing ones manually. If your website was in a way for example that your frontend is hosted elsewhere and needs to access your backend by a subdomain (eg. `backend.yourdomain.com`), you will need to disable proxy for your `www`, `@` and `backend` DNS entries in cloudflare, redeploy your frontend, and check if your website works again and (optionally) reactivates the proxies afterwards.
+      
     - Follow the steps to change your DNS servers. It might vary from one domain provider to another.
     - Go to DNS tab, click Add Record:
       - Type: `NS`
