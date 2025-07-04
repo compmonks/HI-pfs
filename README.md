@@ -50,5 +50,27 @@ Join if you feel like that's needed!
       `cloudflared --version`
    - Login to your cloudflare account\
        `cloudflared tunnel login`
+     the browser should open to your account, then login
+   - On `Authorize Clouflare Tunnel`, choose your domain and click `Authorize`. You should see a confirmation message after a few seconds. Then close the browser
+   - create a tunnel in your console
+     `cloudflared tunnel create ipfs-tunnel`
+   - create a directory if it does not exist
+     `sudo mkdir -p /etc/cloudflared`
+   - create a config file
+     `sudo nano /etc/cloudflared/config.yml`
+     paste the following code:
+     ```
+      # /etc/cloudflared/config.yml
+      tunnel: ipfs-tunnel
+      credentials-file: /root/.cloudflared/ipfs-tunnel.json
+
+      ingress:
+      - hostname: ipfs.yourdomain.com
+        service: http://localhost:8081
+      - service: http_status:404
+     ```
+  - route the DNS
+    `cloudflared tunnel route dns ipfs-tunnel ipfs.yourdomain.com`
+
 
 
