@@ -70,8 +70,14 @@ Join if you feel like that's needed!
         service: http://localhost:8081
       - service: http_status:404
      ```
-  - route the DNS\
+   - route the DNS\
     `cloudflared tunnel route dns ipfs-tunnel ipfs.yourdomain.com`
+
+   - restart cloudflared\
+    `sudo systemctl restart cloudflared`
+
+   - enable on boot\
+    `sudo systemctl enable cloudflared`
 
 
 
