@@ -79,5 +79,8 @@ Join if you feel like that's needed!
    - enable on boot\
     `sudo systemctl enable cloudflared`
 
+3. Download the setup script
+   `bash <(curl -s https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/bootstrap.sh)`
+
 
 
