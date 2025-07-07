@@ -256,11 +256,11 @@ setup_token_server(){
   
   echo "  → Downloading server.py and (if primary) generate_token.py..."
   wget -qO /home/$IPFS_USER/token-server/server.py \
-    https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/server.py
+    https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/server.py
 
   if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
     wget -qO /home/$IPFS_USER/token-server/generate_token.py \
-      https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/generate_token.py
+      https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py
     chmod +x /home/$IPFS_USER/token-server/generate_token.py
   fi
 
