@@ -12,6 +12,27 @@ read -p "Enter your Pi admin/user name: " IPFS_USER
 read -p "Enter your email for reports: " EMAIL
 read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., mynode): " TUNNEL_SUBDOMAIN
 
+# 0. Prerequisites
+prerequisites(){
+  echo "[0] Installing prerequisites: IPFS, Caddy..."
+  sudo apt update
+  sudo apt install -y curl unzip
+
+  # Install IPFS if not found
+  if ! command -v ipfs &>/dev/null; then
+    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+  fi
+
+  # Install Caddy if not found
+  if ! command -v caddy &>/dev/null; then
+    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    sudo apt update
+    sudo apt install -y caddy
+  fi
+}
+
 # 1. Detect and mount 1TB+ SSD
 setup_mount() {
   echo -e "\n[1/6] Scanning for external SSD ≥ ${MIN_SIZE_GB}GB..."
