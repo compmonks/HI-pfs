@@ -13,7 +13,7 @@ Join if you feel like that's needed!
    - Hardware:
      - tested on a **Raspberry Pi 4B**
      - **SD card 16GB**
-     - **SSD 1TB min**
+     - **SSD 1TB min formatted to ext4**
      - your necessary cables to plug and power everything together
      - a case for the rpi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
    - Software:
