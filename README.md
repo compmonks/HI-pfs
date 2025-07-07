@@ -1,5 +1,5 @@
 # HI-pfs
-**Your ipfs network as easy and cheap one can say Hi!**\
+**Your ipfs network as easy and cheap one can say Hi!**
 
 ![image](https://github.com/user-attachments/assets/ea32ff4e-e81b-4b62-83df-2d69ec9e8235)
 Source: [Link](https://blog.ipfs.tech/2022-06-09-practical-explainer-ipfs-gateways-1/)
