@@ -231,4 +231,46 @@ EOF
   echo "  ✓ Cloudflare Tunnel '$TUNNEL_NAME' is running and secured at https://${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}"
 }
 
+# 7. Execute full setup
+run_all() {
+  echo -e "
+📦 HI-pfs Setup Script $SETUP_VERSION"
 
+  read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
+
+  setup_mount
+  setup_ipfs_service
+  setup_desktop_launcher
+  setup_caddy
+  setup_cloudflare_tunnel
+  setup_token_server
+
+  # Optional: sync shared config and CID files
+  if [[ -f "./swarm.key" ]]; then
+    echo "  ✓ Using private swarm.key"
+    cp ./swarm.key /home/$IPFS_USER/.ipfs/swarm.key
+    chown $IPFS_USER:$IPFS_USER /home/$IPFS_USER/.ipfs/swarm.key
+  fi
+
+  if [[ "$IS_PRIMARY_NODE" == "n" && -f "./PEERS.txt" ]]; then
+    echo "  ✓ Adding bootstrap peers from PEERS.txt"
+    while read -r PEER; do
+      sudo -u $IPFS_USER ipfs bootstrap add "$PEER"
+    done < ./PEERS.txt
+  fi
+
+  if [[ -f "/home/$IPFS_USER/ipfs-admin/shared-cids.txt" ]]; then
+    echo "  ✓ Pinning shared CIDs"
+    while read -r CID; do
+      sudo -u $IPFS_USER ipfs pin add "$CID"
+    done < /home/$IPFS_USER/ipfs-admin/shared-cids.txt
+  fi
+
+  echo -e "
+✅ IPFS node is live. Admin uploads in: $REMOTE_ADMIN_DIR"
+  echo "   Token generator: python3 /home/$IPFS_USER/token-server/generate_token.py <folder>"
+  echo "   Logs sync to Dropbox: $DROPBOX_LOG_DIR"
+  echo "   Node setup complete with script version: $SETUP_VERSION"
+}
+
+run_all
