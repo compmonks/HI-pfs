@@ -1,7 +1,11 @@
 # HI-pfs
 **Your ipfs network as easy and cheap one can say Hi!**\
 
-Hi-pfs is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage.
+![image](https://github.com/user-attachments/assets/ea32ff4e-e81b-4b62-83df-2d69ec9e8235)
+Source: [Link](https://blog.ipfs.tech/2022-06-09-practical-explainer-ipfs-gateways-1/)
+
+
+**Hi-pfs** is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/))
 
 Join if you feel like that's needed!
 
