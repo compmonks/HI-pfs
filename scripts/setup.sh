@@ -11,7 +11,7 @@ SETUP_VERSION="v1.0.0"
 # User prompted variables
 read -p "Enter your Pi admin/user name: " IPFS_USER
 read -p "Enter your email for reports: " EMAIL
-read -p "Enter your desired node name (similar logic than hostname): " NODE_NAME
+read -p "Enter your desired node name (similar logic than hostname eg. ipfs-node-00): " NODE_NAME
 read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., ipfs0): " TUNNEL_SUBDOMAIN
 read -p "Enter your Cloudflare domain (e.g., example.com): " CLOUDFLARE_DOMAIN
 read -p "Enable password protection for IPFS Web UI? (y/n): " ENABLE_AUTH
@@ -62,6 +62,10 @@ prerequisites(){
     sudo apt install -y /tmp/ipfs-desktop.deb || echo "  ⚠️ IPFS Desktop install failed or skipped."
     rm -f /tmp/ipfs-desktop.deb
   fi
+  
+  # instll python and flask
+  sudo apt install -y python3 python3-pip zip
+  pip3 install flask flask-mail requests
 }
 
 # 1. Detect and mount 1TB+ SSD
@@ -184,6 +188,7 @@ EOF
 
   echo "  ✓ Caddy configured for $FULL_DOMAIN with${ENABLE_AUTH:+ optional} HTTPS and reverse proxy."
   }
+  
 # 5. Install Cloudflare Tunnel
 setup_cloudflare_tunnel() {
   echo -e "\n[5/6] Installing and configuring Cloudflare Tunnel..."
@@ -193,7 +198,7 @@ setup_cloudflare_tunnel() {
   sudo cloudflared login
 
   # Create and configure named tunnel
-  TUNNEL_NAME="ipfs-${NODE_NAME}"
+  TUNNEL_NAME=NODE_NAME
   sudo cloudflared tunnel create "$TUNNEL_NAME"
 
   # Create config.yml
@@ -231,13 +236,73 @@ EOF
   echo "  ✓ Cloudflare Tunnel '$TUNNEL_NAME' is running and secured at https://${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}"
 }
 
+# 6. Token ZIP server + logging + remote folder
+setup_token_server(){
+  echo -e "\n[6/6] Setting up token server..."
+
+  # Create necessary directories
+  mkdir -p /home/$IPFS_USER/token-server
+  mkdir -p $REMOTE_ADMIN_DIR/zips
+  mkdir -p $REMOTE_ADMIN_DIR/tokens
+  mkdir -p $REMOTE_ADMIN_DIR/logs
+  
+  # Set ownership and permissions
+  ln -sfn $REMOTE_ADMIN_DIR/tokens /home/$IPFS_USER/token-server/tokens
+  ln -sfn $REMOTE_ADMIN_DIR/zips /home/$IPFS_USER/token-server/zips
+  ln -sfn $REMOTE_ADMIN_DIR/logs /home/$IPFS_USER/token-server/logs
+
+  chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
+  chown -R $IPFS_USER:$IPFS_USER $REMOTE_ADMIN_DIR
+  
+  echo "  → Downloading server.py and (if primary) generate_token.py..."
+  wget -qO /home/$IPFS_USER/token-server/server.py \
+    https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/server.py
+
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    wget -qO /home/$IPFS_USER/token-server/generate_token.py \
+      https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/generate_token.py
+    chmod +x /home/$IPFS_USER/token-server/generate_token.py
+  fi
+
+  chown $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server/*.py
+  chmod +x /home/$IPFS_USER/token-server/server.py
+  
+  # Create systemd service for token server
+  sudo tee /etc/systemd/system/token-server.service > /dev/null <<EOF
+[Unit]
+Description=Token ZIP Flask Server
+After=network.target ipfs.service
+Requires=ipfs.service
+
+[Service]
+WorkingDirectory=/home/$IPFS_USER/token-server
+ExecStart=/usr/bin/python3 server.py
+User=$IPFS_USER
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable token-server
+  sudo systemctl start token-server
+
+  echo "  ✓ Token server running at http://<node>:8082"
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    echo "  ✓ Token generator installed."
+    echo "    Run: python3 /home/$IPFS_USER/token-server/generate_token.py <folder>"
+  fi
+}
+
 # 7. Execute full setup
 run_all() {
   echo -e "
 📦 HI-pfs Setup Script $SETUP_VERSION"
 
   read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
-
+	
+  prerequisites
   setup_mount
   setup_ipfs_service
   setup_desktop_launcher
@@ -269,7 +334,6 @@ run_all() {
   echo -e "
 ✅ IPFS node is live. Admin uploads in: $REMOTE_ADMIN_DIR"
   echo "   Token generator: python3 /home/$IPFS_USER/token-server/generate_token.py <folder>"
-  echo "   Logs sync to Dropbox: $DROPBOX_LOG_DIR"
   echo "   Node setup complete with script version: $SETUP_VERSION"
 }
 
