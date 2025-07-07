@@ -14,7 +14,7 @@ read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., mynode): " TUNNEL
 
 # 0. Prerequisites
 prerequisites(){
-  echo "[0] Installing prerequisites: IPFS, Caddy..."
+  echo "[0/6] Installing prerequisites: IPFS, Caddy..."
   sudo apt update
   sudo apt install -y curl unzip
 
