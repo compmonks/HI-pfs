@@ -1,8 +1,8 @@
 #!/bin/bash
 # HI-pfs bootstrap script to download and execute the full IPFS node setup
 
-SETUP_URL="https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/setup.sh"
-TUNNEL_SCRIPT_URL="https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/cloudflared.sh"
+SETUP_URL="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/setup.sh"
+TUNNEL_SCRIPT_URL="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cloudflared.sh"
 SETUP_TEMP="/tmp/ipfs-setup.sh"
 TUNNEL_TEMP="/tmp/cloudflared.sh"
 
