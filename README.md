@@ -12,13 +12,26 @@ Join if you feel like that's needed!
      - **SSD 1TB min**
      - your necessary cables to plug and power everything together
      - a case for the rpi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
-   - Software: **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
+   - Software:
+      - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
+      - An existing web domain that you own.
+      - A Cloudflare account (can be created later in the process).
    - A stable internet connection, **LAN** or **WAN**
 
-
-## Setup
 ### Scenario A: Use a subdomain from your existing domain (recommended)
-1. Create a subdomain (eg. `ipfs.yourdomain.com`).
+
+## Setup (for each node/Pi)
+0. On your PI 
+   - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).
+   - Decide on a similarly consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
+   - Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
+
+   So in the end, for each node/Pi you have:
+      - a unique hostname: eg. `ipfs-host-00`
+      - a unique node name: eg. `ipfs-node-00`
+      - a unique subdomain name: eg. `ipfs0.yourdomain.com`
+
+1. Create a subdomain (eg. `ipfs0.yourdomain.com`).
    
     If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others.
 
@@ -29,19 +42,19 @@ Join if you feel like that's needed!
     - Follow the steps to change your DNS servers. It might vary from one domain provider to another.
     - Go to DNS tab, click Add Record:
       - Type: `NS`
-      - Name: `ipfs` (this makes `ipfs.yourdomain.com`)
-      - Content: `ipfs.ns.cloudflare.com` (Cloudflare name servers)
+      - Name: `ipfs0` (this makes `ipfs0.yourdomain.com`)
+      - Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers)
    
    **DOMAIN PROVIDER SETUP**
    These steps may vary depending on your domain provider:
    - Go to your DNS zone entries
    - Add an NS record for the subdomain:
-      - Subdomain: `ipfs`
+      - Subdomain: `ipfs0`
       - Type: `NS`
-      - Target: Same Cloudflare name servers as above (eg. `ipfs.ns.cloudflare.com`)
+      - Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
 
-   This delegates `ipfs.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider.
-   Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your    domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
+   This delegates `ipfs0.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider.
+   Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
 
    Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
 
@@ -60,8 +73,8 @@ Join if you feel like that's needed!
        `cloudflared tunnel login`
      the browser should open to your account, then login
    - On `Authorize Clouflare Tunnel`, choose your domain and click `Authorize`. You should see a confirmation message after a few seconds. Then close the browser
-   - create a tunnel in your console\
-     `cloudflared tunnel create ipfs-tunnel`
+   - create a tunnel in your console (the tunnel name also depends of your node name)\
+     `cloudflared tunnel create ipfs-node-00`
    - create a directory if it does not exist\
      `sudo mkdir -p /etc/cloudflared`
    - create a config file\
@@ -70,16 +83,16 @@ Join if you feel like that's needed!
      paste the following code:
      ```
       # /etc/cloudflared/config.yml
-      tunnel: ipfs-tunnel
-      credentials-file: /root/.cloudflared/ipfs-tunnel.json
+      tunnel: ipfs-node-00
+      credentials-file: /root/.cloudflared/ipfs-node-00.json
 
       ingress:
-      - hostname: ipfs.yourdomain.com
+      - hostname: ipfs0.yourdomain.com
         service: http://localhost:8081
       - service: http_status:404
      ```
    - route the DNS\
-    `cloudflared tunnel route dns ipfs-tunnel ipfs.yourdomain.com`
+    `cloudflared tunnel route dns ipfs-node-00 ipfs0.yourdomain.com`
 
    - restart cloudflared\
     `sudo systemctl restart cloudflared`
