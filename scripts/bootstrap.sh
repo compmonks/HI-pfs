@@ -1,21 +1,38 @@
 #!/bin/bash
 # HI-pfs bootstrap script to download and execute the full IPFS node setup
 
-REPO_URL="https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/setup.sh"
-TEMP_SCRIPT="/tmp/ipfs-setup.sh"
+SETUP_URL="https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/setup.sh"
+TUNNEL_SCRIPT_URL="https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/cloudflared.sh"
+SETUP_TEMP="/tmp/ipfs-setup.sh"
+TUNNEL_TEMP="/tmp/cloudflared.sh"
 
-echo "🔽 Downloading setup script from $REPO_URL..."
-curl -fsSL "$REPO_URL" -o "$TEMP_SCRIPT"
+# Download and run cloudflared tunnel creation script
+echo "🔽 Downloading Cloudflare tunnel script from $TUNNEL_SCRIPT_URL..."
+curl -fsSL "$TUNNEL_SCRIPT_URL" -o "$TUNNEL_TEMP"
+
+if [ $? -ne 0 ]; then
+  echo "❌ Failed to download tunnel script. Exiting."
+  exit 1
+fi
+
+chmod +x "$TUNNEL_TEMP"
+echo "🚀 Executing tunnel script..."
+"$TUNNEL_TEMP"
+
+# Download and run setup.sh
+echo "🔽 Downloading setup script from $SETUP_URL..."
+curl -fsSL "$SETUP_URL" -o "$SETUP_TEMP"
 
 if [ $? -ne 0 ]; then
   echo "❌ Failed to download setup script. Exiting."
   exit 1
 fi
 
-chmod +x "$TEMP_SCRIPT"
+chmod +x "$SETUP_TEMP"
 echo "🚀 Executing setup script..."
-"$TEMP_SCRIPT"
+"$SETUP_TEMP"
 
+# Clean up temporary files
 echo "🧹 Cleaning up..."
-rm -f "$TEMP_SCRIPT"
-echo "✅ Setup complete and cleaned up."
+rm -f "$SETUP_TEMP" "$TUNNEL_TEMP"
+echo "✅ All setup scripts executed and removed."
