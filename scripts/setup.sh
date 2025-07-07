@@ -2,15 +2,29 @@
 # IPFS Raspberry Pi Node Setup with Secure Remote Admin, Token-Gated ZIP Delivery, Dropbox Log Sync, and Replication Readiness
 
 MOUNT_POINT="/mnt/ipfs"
-MIN_SIZE_GB=990
+MIN_SIZE_GB=1000
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
 DROPBOX_LOG_DIR="/home/$IPFS_USER/Dropbox/IPFS-Logs"
 SETUP_VERSION="v1.0.0"
 
+# User prompted variables
 read -p "Enter your Pi admin/user name: " IPFS_USER
 read -p "Enter your email for reports: " EMAIL
 read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., mynode): " TUNNEL_SUBDOMAIN
+read -p "Enable password protection for IPFS Web UI? (y/n): " ENABLE_AUTH
+
+ if [[ "$ENABLE_AUTH" == "y" ]]; then
+    read -s -p "Enter password for $IPFS_USER: " ADMIN_PASS
+    echo ""
+    HASHED_PASS=$(caddy hash-password --plaintext "$ADMIN_PASS")
+    AUTH_BLOCK="
+  basicauth {
+    $ADMIN_USER $HASHED_PASS
+  }"
+  else
+    AUTH_BLOCK=""
+  fi
 
 # 0. Prerequisites
 prerequisites(){
@@ -146,5 +160,28 @@ EOF
 
   echo "  ✓ IPFS Web UI will open in fullscreen at startup."
 }
+
+# 4. Install and configure Caddy
+setup_caddy() {
+  echo -e "\n[4/6] Installing and configuring Caddy reverse proxy..."
+
+  # Hash password
+  HASHED_PASS=$(caddy hash-password --plaintext "$ADMIN_PASS")
+
+  # Create Caddyfile
+  FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
+  CADDYFILE_PATH="/etc/caddy/Caddyfile"
+  sudo tee "$CADDYFILE_PATH" > /dev/null <<EOF
+$FULL_DOMAIN {
+  reverse_proxy 127.0.0.1:5001$AUTH_BLOCK
+}
+EOF
+
+  sudo chown root:root "$CADDYFILE_PATH"
+  sudo systemctl enable caddy
+  sudo systemctl restart caddy
+
+  echo "  ✓ Caddy configured for $FULL_DOMAIN with${ENABLE_AUTH:+ optional} HTTPS and reverse proxy."
+  }
 
 
