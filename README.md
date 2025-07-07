@@ -22,8 +22,6 @@ Join if you feel like that's needed!
       - A Cloudflare account (can be created later in the process).
    - A stable internet connection, **LAN** or **WAN**
 
-### Scenario A: Use a subdomain from your existing domain (recommended)
-
 ## Setup (for each node/Pi)
 0. On your PI 
    - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).
