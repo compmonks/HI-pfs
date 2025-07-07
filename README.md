@@ -61,46 +61,7 @@ Join if you feel like that's needed!
    **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**
    If that's the case, you will need to troubleshoot this as it depends of your setup.
 
-2. Create tunneling on your PI
-
-   - download cloudlfared on your PI (check the Github URL, it could have changed)\
-      `curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb -o cloudflared.deb`
-   - install\
-      `sudo dpkg -i cloudflared.deb`
-   - check if installed. If you see a version number, you're good togo. Itherwise check links urls and potential updates on Cloudflared's github.\
-      `cloudflared --version`
-   - Login to your cloudflare account\
-       `cloudflared tunnel login`
-     the browser should open to your account, then login
-   - On `Authorize Clouflare Tunnel`, choose your domain and click `Authorize`. You should see a confirmation message after a few seconds. Then close the browser
-   - create a tunnel in your console (the tunnel name also depends of your node name)\
-     `cloudflared tunnel create ipfs-node-00`
-   - create a directory if it does not exist\
-     `sudo mkdir -p /etc/cloudflared`
-   - create a config file\
-     `sudo nano /etc/cloudflared/config.yml`
-
-     paste the following code:
-     ```
-      # /etc/cloudflared/config.yml
-      tunnel: ipfs-node-00
-      credentials-file: /root/.cloudflared/ipfs-node-00.json
-
-      ingress:
-      - hostname: ipfs0.yourdomain.com
-        service: http://localhost:8081
-      - service: http_status:404
-     ```
-   - route the DNS\
-    `cloudflared tunnel route dns ipfs-node-00 ipfs0.yourdomain.com`
-
-   - restart cloudflared\
-    `sudo systemctl restart cloudflared`
-
-   - enable on boot\
-    `sudo systemctl enable cloudflared`
-
-3. Download the setup script\
+2. Back to the Pi Download the setup script\
    `bash <(curl -s https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/bootstrap.sh)`
 
 
