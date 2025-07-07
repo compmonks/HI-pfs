@@ -68,9 +68,6 @@ Join if you feel like that's needed!
 
    **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**
    If that's the case, you will need to troubleshoot this as it depends of your setup.
-
-2. Back to the Pi -> Download and execute the main script\
+ 
+3. Back to the Pi -> Download and execute the main script\
    `bash <(curl -s https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/bootstrap.sh)`
-
-
-
