@@ -31,6 +31,21 @@ prerequisites(){
     sudo apt update
     sudo apt install -y caddy
   fi
+
+  # Ensure Chromium is installed
+  if ! command -v chromium-browser &>/dev/null; then
+    echo "  → Installing Chromium browser..."
+    sudo apt update
+    sudo apt install -y chromium-browser
+  fi
+
+  # Ensure IPFS Desktop is installed (if using optional desktop app)
+  if ! command -v ipfs-desktop &>/dev/null; then
+    echo "  → Installing IPFS Desktop..."
+    wget -O /tmp/ipfs-desktop.deb https://github.com/ipfs/ipfs-desktop/releases/latest/download/ipfs-desktop-latest-linux.deb
+    sudo apt install -y /tmp/ipfs-desktop.deb || echo "  ⚠️ IPFS Desktop install failed or skipped."
+    rm -f /tmp/ipfs-desktop.deb
+  fi
 }
 
 # 1. Detect and mount 1TB+ SSD
@@ -108,6 +123,28 @@ EOF
   sudo systemctl start ipfs
 
   echo "  ✓ IPFS service installed and running as '$IPFS_USER' with node name '$NODE_NAME'"
+}
+
+# 3. Autostart IPFS Web UI in fullscreen
+setup_desktop_launcher() {
+echo -e "
+[3/6] Setting up IPFS Desktop Web UI autostart..."
+
+ AUTOSTART_DIR="/home/$IPFS_USER/.config/autostart"
+  mkdir -p "$AUTOSTART_DIR"
+
+  cat <<EOF | sudo tee "$AUTOSTART_DIR/ipfs-desktop.desktop" > /dev/null
+[Desktop Entry]
+Name=IPFS Web UI
+Exec=chromium-browser --start-fullscreen http://127.0.0.1:5001/webui
+Type=Application
+X-GNOME-Autostart-enabled=true
+EOF
+
+  sudo chown $IPFS_USER:$IPFS_USER "$AUTOSTART_DIR/ipfs-desktop.desktop"
+  chmod +x "$AUTOSTART_DIR/ipfs-desktop.desktop"
+
+  echo "  ✓ IPFS Web UI will open in fullscreen at startup."
 }
 
 
