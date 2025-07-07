@@ -24,7 +24,8 @@ Join if you feel like that's needed!
 
 ## Setup (for each node/Pi)
 0. On your PI 
-   - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).
+   - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).\
+     `sudo hostnamectl set-hostname ipfs-host-00`
    - Decide on a similarly consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
    - Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
 
