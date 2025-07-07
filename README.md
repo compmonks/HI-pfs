@@ -6,6 +6,14 @@ Hi-pfs is an open, free and community-driven project to enable as many creatives
 Join if you feel like that's needed!
 
 ## Requirements
+   - Hardware:
+     - tested on a **Raspberry Pi 4B**
+     - **SD card 16GB**
+     - **SSD 1TB min**
+     - your necessary cables to plug and power everything together
+     - a case for the rpi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
+   - Software: **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
+   - A stable internet connection, **LAN** or **WAN**
 
 
 ## Setup
