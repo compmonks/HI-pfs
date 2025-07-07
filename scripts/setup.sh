@@ -11,7 +11,9 @@ SETUP_VERSION="v1.0.0"
 # User prompted variables
 read -p "Enter your Pi admin/user name: " IPFS_USER
 read -p "Enter your email for reports: " EMAIL
-read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., mynode): " TUNNEL_SUBDOMAIN
+read -p "Enter your desired node name (similar logic than hostname): " NODE_NAME
+read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., ipfs0): " TUNNEL_SUBDOMAIN
+read -p "Enter your Cloudflare domain (e.g., example.com): " CLOUDFLARE_DOMAIN
 read -p "Enable password protection for IPFS Web UI? (y/n): " ENABLE_AUTH
 
  if [[ "$ENABLE_AUTH" == "y" ]]; then
@@ -109,12 +111,11 @@ setup_ipfs_service() {
   sudo -u $IPFS_USER ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
 
   # Set custom node name in IPFS config for diagnostics
-  NODE_NAME=$(hostname -s)
   sudo -u $IPFS_USER ipfs config --json Identity.NodeName "\"$NODE_NAME\""
 
   # Advertise public subdomain for peer discovery (optional)
   sudo -u $IPFS_USER ipfs config --json Addresses.Announce \
-    "[\"/dns4/${TUNNEL_SUBDOMAIN}.example.com/tcp/443/https\"]"
+    "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
 
   cat <<EOF | sudo tee /etc/systemd/system/ipfs.service > /dev/null
 [Unit]
@@ -183,5 +184,51 @@ EOF
 
   echo "  ✓ Caddy configured for $FULL_DOMAIN with${ENABLE_AUTH:+ optional} HTTPS and reverse proxy."
   }
+# 5. Install Cloudflare Tunnel
+setup_cloudflare_tunnel() {
+  echo -e "\n[5/6] Installing and configuring Cloudflare Tunnel..."
+
+  # Authenticate Cloudflare Tunnel
+  echo "  → Running cloudflared login. Please authenticate in the browser..."
+  sudo cloudflared login
+
+  # Create and configure named tunnel
+  TUNNEL_NAME="ipfs-${NODE_NAME}"
+  sudo cloudflared tunnel create "$TUNNEL_NAME"
+
+  # Create config.yml
+  mkdir -p /etc/cloudflared
+  sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
+tunnel: $TUNNEL_NAME
+credentials-file: /root/.cloudflared/${TUNNEL_NAME}.json
+
+ingress:
+  - hostname: ${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}
+    service: http://localhost:8081
+  - service: http_status:404
+EOF
+
+  # Set up systemd service
+  sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/cloudflared tunnel --config /etc/cloudflared/config.yml run
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable cloudflared
+  sudo systemctl start cloudflared
+
+  echo "  ✓ Cloudflare Tunnel '$TUNNEL_NAME' is running and secured at https://${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}"
+}
 
 
