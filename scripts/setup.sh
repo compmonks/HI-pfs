@@ -69,3 +69,45 @@ setup_mount() {
   echo "❌ No suitable SSD (≥${MIN_SIZE_GB}GB) found. Aborting."
   exit 1
 }
+
+# 2. Configure IPFS systemd service
+setup_ipfs_service() {
+  echo -e "
+[2/6] Setting up IPFS systemd service..."
+
+  sudo -u $IPFS_USER ipfs init --profile=server
+  sudo -u $IPFS_USER ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
+  sudo -u $IPFS_USER ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+
+  # Set custom node name in IPFS config for diagnostics
+  NODE_NAME=$(hostname -s)
+  sudo -u $IPFS_USER ipfs config --json Identity.NodeName "\"$NODE_NAME\""
+
+  # Advertise public subdomain for peer discovery (optional)
+  sudo -u $IPFS_USER ipfs config --json Addresses.Announce \
+    "[\"/dns4/${TUNNEL_SUBDOMAIN}.example.com/tcp/443/https\"]"
+
+  cat <<EOF | sudo tee /etc/systemd/system/ipfs.service > /dev/null
+[Unit]
+Description=IPFS daemon
+After=network.target mnt-ipfs.mount
+Requires=mnt-ipfs.mount
+
+[Service]
+User=$IPFS_USER
+ExecStart=/usr/local/bin/ipfs daemon --enable-gc
+Restart=on-failure
+LimitNOFILE=10240
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable ipfs
+  sudo systemctl start ipfs
+
+  echo "  ✓ IPFS service installed and running as '$IPFS_USER' with node name '$NODE_NAME'"
+}
+
+
