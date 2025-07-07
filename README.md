@@ -25,7 +25,7 @@ Join if you feel like that's needed!
 ## Setup (for each node/Pi)
 0. On your PI 
    - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).\
-     `bash <(curl -s https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/init.sh)`\
+     `bash <(curl -s https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`\
      This script will check for potential previous conflicting setup and tidy things up. It will also prompt you for your new hostname (eg. `ipfs-host-00`). You can also use this script either as the very first step in your setup or if you want to restart the config from scratch. You will need to reboot after that.
    - Decide on a similarly consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
    - Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
@@ -70,4 +70,4 @@ Join if you feel like that's needed!
    If that's the case, you will need to troubleshoot this as it depends of your setup.
  
 3. Back to the Pi -> Download and execute the main script\
-   `bash <(curl -s https://raw.githubusercontent.com/TheComputationalMonkeys/HI-pfs/main/scripts/bootstrap.sh)`
+   `bash <(curl -s https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
