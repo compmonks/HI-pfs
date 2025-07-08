@@ -72,3 +72,5 @@ Join if you feel like that's needed!
  
 3. Back to the Pi -> Download and execute the main script\
    `bash <(curl -s https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
+
+   Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
