@@ -1,32 +1,48 @@
 #!/bin/bash
-# Script to create and configure a new Cloudflare Tunnel and subdomain for a new IPFS node
+# HI-pfs: Cloudflare Tunnel Setup for IPFS Node
+# This script installs cloudflared, creates a named tunnel, maps a subdomain, and installs systemd config
+
+set -e
 
 read -p "Enter unique tunnel name (e.g. ipfs-node-02): " TUNNEL_NAME
-read -p "Enter subdomain for this node (e.g. ipfs2.example.com): " SUBDOMAIN
+read -p "Enter full subdomain (e.g. ipfs2.example.com): " SUBDOMAIN
 
 CONFIG_DIR="/etc/cloudflared"
 CREDENTIAL_FILE="/root/.cloudflared/${TUNNEL_NAME}.json"
 CONFIG_FILE="${CONFIG_DIR}/config.yml"
+SERVICE_NAME="cloudflared"
 
-# Step 1: Install cloudflared if missing
+# 1. Install cloudflared if missing
 if ! command -v cloudflared &> /dev/null; then
-  echo "Installing cloudflared..."
+  echo "🔧 Installing cloudflared..."
   ARCH=$(uname -m)
   if [[ "$ARCH" == "aarch64" ]]; then
-    curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb -o /tmp/cloudflared.deb
+    FILE="cloudflared-linux-arm64.deb"
+  elif [[ "$ARCH" == "armv7l" ]]; then
+    FILE="cloudflared-linux-arm.deb"
   else
-    curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm.deb -o /tmp/cloudflared.deb
+    echo "❌ Unsupported architecture: $ARCH"
+    exit 1
   fi
-  sudo dpkg -i /tmp/cloudflared.deb
+
+  curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/$FILE" -o "/tmp/$FILE"
+  sudo dpkg -i "/tmp/$FILE"
 fi
 
-# Step 2: Authenticate if needed
+# 2. Authenticate tunnel access
+echo "🌐 Opening browser for Cloudflare login..."
 cloudflared tunnel login
 
-# Step 3: Create the tunnel
-cloudflared tunnel create "$TUNNEL_NAME"
+# 3. Create tunnel if not already present
+if [[ ! -f "$CREDENTIAL_FILE" ]]; then
+  echo "🚧 Creating tunnel $TUNNEL_NAME..."
+  cloudflared tunnel create "$TUNNEL_NAME"
+else
+  echo "✅ Tunnel $TUNNEL_NAME already exists (credentials found)."
+fi
 
-# Step 4: Generate config.yml
+# 4. Create config.yml
+echo "📝 Writing config to $CONFIG_FILE..."
 sudo mkdir -p "$CONFIG_DIR"
 sudo tee "$CONFIG_FILE" > /dev/null <<EOF
 tunnel: $TUNNEL_NAME
@@ -38,13 +54,31 @@ ingress:
   - service: http_status:404
 EOF
 
-# Step 5: Map the subdomain
+# 5. Create DNS route
+echo "🔗 Mapping DNS $SUBDOMAIN to tunnel..."
 cloudflared tunnel route dns "$TUNNEL_NAME" "$SUBDOMAIN"
 
-# Step 6: Enable and start the tunnel
-sudo systemctl enable cloudflared
-sudo systemctl restart cloudflared
+# 6. Create systemd service (optional if not already installed)
+echo "🛠️ Enabling systemd tunnel service..."
+sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network-online.target
+Wants=network-online.target
 
-# Done
-echo "✅ Tunnel '$TUNNEL_NAME' is live and mapped to https://$SUBDOMAIN"
-echo "🌐 Make sure '$SUBDOMAIN' is added to your Cloudflare DNS zone."
+[Service]
+ExecStart=/usr/bin/cloudflared tunnel --config $CONFIG_FILE run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable "$SERVICE_NAME"
+sudo systemctl restart "$SERVICE_NAME"
+
+echo "✅ Tunnel '$TUNNEL_NAME' is now running at https://$SUBDOMAIN"
+echo "🧩 Make sure $SUBDOMAIN exists in your Cloudflare DNS zone."
