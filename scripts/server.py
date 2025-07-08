@@ -40,5 +40,13 @@ def download():
     log_event(f"ACCEPTED {request.remote_addr} downloaded {filename}")
     return send_file(zip_path, as_attachment=True)
 
+@app.route('/shared-cids.txt', methods=['GET'])
+def serve_cid_file():
+    cid_path = os.path.expanduser('~/ipfs-admin/shared-cids.txt')
+    if os.path.exists(cid_path):
+        return send_file(cid_path, mimetype='text/plain')
+    else:
+        return "CID file not found", 404
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8082)
