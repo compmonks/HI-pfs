@@ -1,38 +1,48 @@
 #!/bin/bash
-# HI-pfs bootstrap script to download and execute the full IPFS node setup
+# HI-pfs Bootstrap Script — Master launcher with remote GitHub-sourced scripts
 
-SETUP_URL="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/setup.sh"
-TUNNEL_SCRIPT_URL="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cloudflared.sh"
-SETUP_TEMP="/tmp/ipfs-setup.sh"
-TUNNEL_TEMP="/tmp/cloudflared.sh"
+set -e
 
-# Download and run cloudflared tunnel creation script
-echo "🔽 Downloading Cloudflare tunnel script from $TUNNEL_SCRIPT_URL..."
-curl -fsSL "$TUNNEL_SCRIPT_URL" -o "$TUNNEL_TEMP"
+# GitHub base (customize to your repo)
+REPO="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts"
 
-if [ $? -ne 0 ]; then
-  echo "❌ Failed to download tunnel script. Exiting."
-  exit 1
-fi
+# Prompt user for environment
+read -p "Enter your Pi admin username (default: compmonks): " IPFS_USER
+IPFS_USER="${IPFS_USER:-compmonks}"
 
-chmod +x "$TUNNEL_TEMP"
-echo "🚀 Executing tunnel script..."
-"$TUNNEL_TEMP"
+read -p "Enter your email for node alerts and sync reports: " EMAIL
+read -p "Enter a hostname for this node (e.g. ipfs-node-00): " NODE_NAME
+read -p "Enter your desired Cloudflare Tunnel subdomain (e.g. ipfs0): " TUNNEL_SUBDOMAIN
+read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
+read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
 
-# Download and run setup.sh
-echo "🔽 Downloading setup script from $SETUP_URL..."
-curl -fsSL "$SETUP_URL" -o "$SETUP_TEMP"
+# Export for sub-processes
+export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE
 
-if [ $? -ne 0 ]; then
-  echo "❌ Failed to download setup script. Exiting."
-  exit 1
-fi
+# Set hostname
+echo "🔧 Setting hostname to $NODE_NAME..."
+sudo hostnamectl set-hostname "$NODE_NAME"
 
-chmod +x "$SETUP_TEMP"
-echo "🚀 Executing setup script..."
-"$SETUP_TEMP"
+# Confirm summary
+echo -e "\n🧪 Environment Summary:"
+echo "  → User:        $IPFS_USER"
+echo "  → Hostname:    $NODE_NAME"
+echo "  → Domain:      $TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
+echo "  → Primary node: $IS_PRIMARY_NODE"
 
-# Clean up temporary files
-echo "🧹 Cleaning up..."
-rm -f "$SETUP_TEMP" "$TUNNEL_TEMP"
-echo "✅ All setup scripts executed and removed."
+# Download and run child scripts
+SCRIPTS=(cloudflared.sh setup.sh)
+
+for script in "${SCRIPTS[@]}"; do
+  echo "⬇️ Downloading $script from GitHub..."
+  curl -fsSL "$REPO/$script" -o "/tmp/$script"
+  chmod +x "/tmp/$script"
+
+  echo "🚀 Running $script..."
+  bash "/tmp/$script"
+
+  echo "🧹 Removing $script..."
+  rm -f "/tmp/$script"
+done
+
+echo -e "\n✅ HI-pfs bootstrap complete for node '$NODE_NAME'."
