@@ -414,6 +414,18 @@ EOF
   echo "  ✓ CID auto-sync scheduled every 30 minutes from $PRIMARY_DOMAIN"
 fi
 
+# Create a manual sync-now command
+SYNC_NOW="/home/$IPFS_USER/sync-now.sh"
+
+sudo tee "$SYNC_NOW" > /dev/null <<EOF
+#!/bin/bash
+echo "[CID SYNC] Manually triggered..."
+bash /home/$IPFS_USER/token-server/pull_shared_cids.sh
+EOF
+
+chmod +x "$SYNC_NOW"
+chown $IPFS_USER:$IPFS_USER "$SYNC_NOW"
+echo "  ✓ Run \`~/sync-now.sh\` to manually sync shared CIDs."
 
   echo -e "
 ✅ IPFS node is live. Admin uploads in: $REMOTE_ADMIN_DIR"
