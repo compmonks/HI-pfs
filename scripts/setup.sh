@@ -384,7 +384,8 @@ if [[ "$IS_PRIMARY_NODE" == "n" ]]; then
   SYNC_SCRIPT="/home/$IPFS_USER/token-server/pull_shared_cids.sh"
   LOG_PATH="/home/$IPFS_USER/token-server/logs/cid-sync.log"
   SHARED_CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
-
+  LOG_FILE="/home/$USER/ipfs-admin/.synced-cids"
+  
   sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
 #!/bin/bash
 PRIMARY_NODE="https://$PRIMARY_DOMAIN"
@@ -395,13 +396,19 @@ mkdir -p \$(dirname "\$TARGET_FILE")
 curl -s "\$PRIMARY_NODE:8082/shared-cids.txt" -o "\$TARGET_FILE"
 
 if [[ -s "\$TARGET_FILE" ]]; then
-  echo "[CID SYNC] Pinning CIDs..."
+  echo "[CID SYNC] Pinning new CIDs..."
+  mkdir -p \$(dirname "\$LOG_FILE")
+  touch "\$LOG_FILE"
+
   while read -r CID; do
-    ipfs pin add "\$CID" 2>/dev/null
+    if ! grep -q "\$CID" "\$LOG_FILE"; then
+      ipfs pin add "\$CID" 2>/dev/null && echo "\$CID" >> "\$LOG_FILE"
+      echo "  + Pinned: \$CID"
+    fi
   done < "\$TARGET_FILE"
   echo "[CID SYNC] Done."
 else
-  echo "[CID SYNC] Warning: shared-cids.txt is empty or unreachable."
+  echo "[CID SYNC] Warning: shared-cids.txt empty or unreachable."
 fi
 EOF
 
