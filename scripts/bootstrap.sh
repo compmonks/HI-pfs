@@ -31,7 +31,7 @@ echo "  → Domain:      $TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
 echo "  → Primary node: $IS_PRIMARY_NODE"
 
 # Download and run child scripts
-SCRIPTS=(cloudflared.sh setup.sh)
+SCRIPTS=(cloudflared.sh setup.sh self-maintenance.sh)
 
 for script in "${SCRIPTS[@]}"; do
   echo "⬇️ Downloading $script from GitHub..."
