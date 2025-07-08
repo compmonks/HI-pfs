@@ -358,7 +358,6 @@ run_all() {
 
   # --- Add Bootstrap Peers ---
 	
-
 if [[ "$IS_PRIMARY_NODE" == "n" && -f "$BOOTSTRAP_PEERS_PATH" ]]; then
   echo "🔗 Adding bootstrap peers from:"
   echo "   → $BOOTSTRAP_PEERS_PATH"
@@ -375,6 +374,46 @@ elif [[ "$IS_PRIMARY_NODE" == "n" ]]; then
   echo "  ⚠️  No PEERS.txt found. New node may remain isolated."
   echo "    → Expected here: $BOOTSTRAP_PEERS_PATH"
 fi
+
+# --- Auto CID Sync from Primary Node ---
+if [[ "$IS_PRIMARY_NODE" == "n" ]]; then
+  echo "🔄 Setting up CID auto-sync from primary node..."
+
+  read -p "Enter the PRIMARY node's domain (e.g., ipfs0.example.com): " PRIMARY_DOMAIN
+
+  SYNC_SCRIPT="/home/$IPFS_USER/token-server/pull_shared_cids.sh"
+  LOG_PATH="/home/$IPFS_USER/token-server/logs/cid-sync.log"
+  SHARED_CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
+
+  sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
+#!/bin/bash
+PRIMARY_NODE="https://$PRIMARY_DOMAIN"
+TARGET_FILE="$SHARED_CID_FILE"
+
+echo "[CID SYNC] Fetching shared CIDs from \$PRIMARY_NODE..."
+mkdir -p \$(dirname "\$TARGET_FILE")
+curl -s "\$PRIMARY_NODE:8082/shared-cids.txt" -o "\$TARGET_FILE"
+
+if [[ -s "\$TARGET_FILE" ]]; then
+  echo "[CID SYNC] Pinning CIDs..."
+  while read -r CID; do
+    ipfs pin add "\$CID" 2>/dev/null
+  done < "\$TARGET_FILE"
+  echo "[CID SYNC] Done."
+else
+  echo "[CID SYNC] Warning: shared-cids.txt is empty or unreachable."
+fi
+EOF
+
+  chmod +x "$SYNC_SCRIPT"
+  chown $IPFS_USER:$IPFS_USER "$SYNC_SCRIPT"
+
+  echo "  → Installing cron job for periodic CID sync..."
+  (sudo -u $IPFS_USER crontab -l 2>/dev/null; echo "*/30 * * * * $SYNC_SCRIPT >> $LOG_PATH 2>&1") | sudo -u $IPFS_USER crontab -
+
+  echo "  ✓ CID auto-sync scheduled every 30 minutes from $PRIMARY_DOMAIN"
+fi
+
 
   echo -e "
 ✅ IPFS node is live. Admin uploads in: $REMOTE_ADMIN_DIR"
