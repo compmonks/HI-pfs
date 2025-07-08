@@ -15,6 +15,7 @@ read -p "Enter your desired node name (similar logic than hostname eg. ipfs-node
 read -p "Enter your desired Cloudflare Tunnel subdomain (e.g., ipfs0): " TUNNEL_SUBDOMAIN
 read -p "Enter your Cloudflare domain (e.g., example.com): " CLOUDFLARE_DOMAIN
 read -p "Enable password protection for IPFS Web UI? (y/n): " ENABLE_AUTH
+read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
 
  if [[ "$ENABLE_AUTH" == "y" ]]; then
     read -s -p "Enter password for $IPFS_USER: " ADMIN_PASS
@@ -63,9 +64,44 @@ prerequisites(){
     rm -f /tmp/ipfs-desktop.deb
   fi
   
-  # instll python and flask
+  # install python and flask
   sudo apt install -y python3 python3-pip zip
   pip3 install flask flask-mail requests
+
+ # --- Secure Swarm Key Setup ---
+echo "🔐 Checking for private swarm.key..."
+
+SWARM_KEY_LOCAL_PATH="$(pwd)/swarm.key"
+
+if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
+    echo "  → No swarm.key found. Generating new private swarm key..."
+    SWARM_KEY_CONTENT=$(openssl rand -hex 32)
+    echo -e "/key/swarm/psk/1.0.0/\n/base16/\n$SWARM_KEY_CONTENT" > "$SWARM_KEY_LOCAL_PATH"
+    echo "  ✓ swarm.key generated and saved locally:"
+    echo "    → $SWARM_KEY_LOCAL_PATH"
+    echo "    ⚠️  Copy this key to all other nodes before running their setup script."
+  else
+    echo "  ✓ Reusing existing swarm.key:"
+    echo "    → $SWARM_KEY_LOCAL_PATH"
+  fi
+else
+  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
+    echo "  ❌ swarm.key is required for secondary nodes but not found."
+    echo "    → Please place the swarm.key from the primary node into this folder:"
+    echo "      → $SWARM_KEY_LOCAL_PATH"
+    exit 1
+  fi
+fi
+
+# Install the swarm.key into IPFS config
+sudo mkdir -p /home/$IPFS_USER/.ipfs
+sudo cp "$SWARM_KEY_LOCAL_PATH" /home/$IPFS_USER/.ipfs/swarm.key
+sudo chown $IPFS_USER:$IPFS_USER /home/$IPFS_USER/.ipfs/swarm.key
+chmod 600 /home/$IPFS_USER/.ipfs/swarm.key
+echo "  ✓ swarm.key installed at /home/$IPFS_USER/.ipfs/swarm.key"
+
+
 }
 
 # 1. Detect and mount 1TB+ SSD
@@ -300,7 +336,7 @@ run_all() {
   echo -e "
 📦 HI-pfs Setup Script $SETUP_VERSION"
 
-  read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
+  
 	
   prerequisites
   setup_mount
