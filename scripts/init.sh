@@ -1,59 +1,57 @@
 #!/bin/bash
-# IPFS node cleanup script to reset a Raspberry Pi before running new bootstrap/setup
+# HI-pfs INIT - Resets a Raspberry Pi to prepare for fresh node setup
 
-echo "🧹 Cleaning up previous IPFS and Cloudflare configurations..."
+echo "🧹 HI-pfs Node Cleanup Starting..."
 
-# Stop and disable services
-sudo systemctl stop ipfs 2>/dev/null
-sudo systemctl disable ipfs 2>/dev/null
+SERVICES=(
+  ipfs
+  caddy
+  cloudflared
+  token-server
+)
 
-sudo systemctl stop caddy 2>/dev/null
-sudo systemctl disable caddy 2>/dev/null
+# Stop and disable relevant services
+echo "→ Stopping services..."
+for svc in "${SERVICES[@]}"; do
+  sudo systemctl stop "$svc" 2>/dev/null
+  sudo systemctl disable "$svc" 2>/dev/null
+done
 
-sudo systemctl stop cloudflared 2>/dev/null
-sudo systemctl disable cloudflared 2>/dev/null
-
-sudo systemctl stop token-server 2>/dev/null
-sudo systemctl disable token-server 2>/dev/null
-
-# Remove systemd service files
-sudo rm -f /etc/systemd/system/ipfs.service
-sudo rm -f /etc/systemd/system/caddy.service
-sudo rm -f /etc/systemd/system/cloudflared.service
-sudo rm -f /etc/systemd/system/token-server.service
+# Remove service files
+echo "→ Removing systemd service files..."
+for svc in "${SERVICES[@]}"; do
+  sudo rm -f "/etc/systemd/system/${svc}.service"
+done
+sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
-# Remove configuration and runtime files
-sudo rm -rf /etc/cloudflared
-sudo rm -rf /home/*/.cloudflared
-sudo rm -rf /home/*/token-server
-sudo rm -rf /mnt/ipfs/*
-sudo rm -f /home/*/.config/autostart/ipfs-desktop.desktop
+# Unmount and clear SSD if mounted at /mnt/ipfs
+echo "→ Unmounting /mnt/ipfs if mounted..."
+sudo umount /mnt/ipfs 2>/dev/null
+sudo rm -rf /mnt/ipfs
 
-# Clean up logs and cron
-sudo rm -f /var/log/ipfs-maintenance.log
-sudo crontab -l | grep -v 'ipfs-maintenance.sh' | sudo crontab -
+# Clear user-specific config/data
+echo "→ Removing user configs (if exist)..."
+rm -rf ~/token-server ~/Dropbox/IPFS-Logs ~/ipfs-admin
+rm -rf ~/.ipfs ~/.config/IPFS ~/.cache/ipfs
+rm -rf ~/.config/autostart/ipfs-desktop.desktop
+rm -f ~/sync-now.sh
+rm -f ~/swarm.key
+rm -f ~/PEERS.txt ~/shared-cids.txt
 
-# Clear Caddy configs
-sudo rm -rf /etc/caddy
-sudo rm -rf /var/lib/caddy
+# Clean up Caddy and Cloudflare
+sudo rm -rf /etc/caddy/Caddyfile /etc/cloudflared/config.yml
+sudo rm -rf /root/.cloudflared
 
-# Hostname update option
-read -p "Do you want to change the hostname? (y/n): " CHANGE_HOSTNAME
-if [[ "$CHANGE_HOSTNAME" == "y" ]]; then
-  read -p "Enter new hostname (or type 'default' to reset to 'raspberrypi'): " NEW_HOSTNAME
-  if [[ "$NEW_HOSTNAME" == "default" ]]; then
-    NEW_HOSTNAME="raspberrypi"
-  fi
-  sudo hostnamectl set-hostname "$NEW_HOSTNAME"
-  sudo sed -i "s/127.0.1.1.*/127.0.1.1       $NEW_HOSTNAME/" /etc/hosts
-  echo "✅ Hostname set to $NEW_HOSTNAME"
+# Remove IPFS binary (optional)
+echo "→ Checking for IPFS binary..."
+if command -v ipfs &> /dev/null; then
+  sudo rm -f "$(command -v ipfs)"
 fi
 
-# Final reboot prompt
-read -p "✅ Cleanup complete. Reboot now? (y/n): " REBOOT
-if [[ "$REBOOT" == "y" ]]; then
-  sudo reboot
-else
-  echo "⚠️ Reboot recommended before running bootstrap script."
+# Optional: remove cloudflared
+if command -v cloudflared &> /dev/null; then
+  sudo rm -f "$(command -v cloudflared)"
 fi
+
+echo "✅ Cleanup complete. Reboot now or run ./bootstrap.sh to begin fresh setup."
