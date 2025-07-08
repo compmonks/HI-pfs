@@ -5,8 +5,8 @@ MOUNT_POINT="/mnt/ipfs"
 MIN_SIZE_GB=1000
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
-DROPBOX_LOG_DIR="/home/$IPFS_USER/Dropbox/IPFS-Logs"
 SETUP_VERSION="v1.0.0"
+BOOTSTRAP_PEERS_PATH="$(pwd)/PEERS.txt"
 
 # User prompted variables
 read -p "Enter your Pi admin/user name: " IPFS_USER
@@ -32,6 +32,43 @@ read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NO
 # 0. Prerequisites
 prerequisites(){
   echo "[0/6] Installing prerequisites: IPFS, Caddy..."
+
+  # --- Secure Swarm Key Setup ---
+echo "🔐 Checking for private swarm.key..."
+SWARM_KEY_LOCAL_PATH="$(pwd)/swarm.key"
+
+if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
+    echo "  → No swarm.key found. Generating new private swarm key..."
+    SWARM_KEY_CONTENT=$(openssl rand -hex 32)
+    echo -e "/key/swarm/psk/1.0.0/\n/base16/\n$SWARM_KEY_CONTENT" > "$SWARM_KEY_LOCAL_PATH"
+    echo "  ✓ swarm.key generated and saved locally:"
+    echo "    → $SWARM_KEY_LOCAL_PATH"
+    echo "    ⚠️  Copy this key to all other nodes before running their setup script."
+  else
+    echo "  ✓ Reusing existing swarm.key:"
+    echo "    → $SWARM_KEY_LOCAL_PATH"
+  fi
+else
+  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
+    echo "  ❌ swarm.key is required for secondary nodes but not found."
+    echo "    → Please place the swarm.key from the primary node into this folder:"
+    echo "      → $SWARM_KEY_LOCAL_PATH"
+    exit 1
+  fi
+fi
+
+if [[ "$IS_PRIMARY_NODE" == "n" && -f "$BOOTSTRAP_PEERS_PATH" ]]; then
+  echo "🔗 Bootstrap peers found at:"
+  echo "   → $BOOTSTRAP_PEERS_PATH"
+  
+elif [[ "$IS_PRIMARY_NODE" == "n" ]]; then
+  echo "  ⚠️  No PEERS.txt found."
+  echo "    →  → Please place the PEERS.txt file from the last previously created node here: $BOOTSTRAP_PEERS_PATH"
+  exit 1
+fi
+
+  
   sudo apt update
   sudo apt install -y curl unzip
 
@@ -68,31 +105,6 @@ prerequisites(){
   sudo apt install -y python3 python3-pip zip
   pip3 install flask flask-mail requests
 
- # --- Secure Swarm Key Setup ---
-echo "🔐 Checking for private swarm.key..."
-
-SWARM_KEY_LOCAL_PATH="$(pwd)/swarm.key"
-
-if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
-  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
-    echo "  → No swarm.key found. Generating new private swarm key..."
-    SWARM_KEY_CONTENT=$(openssl rand -hex 32)
-    echo -e "/key/swarm/psk/1.0.0/\n/base16/\n$SWARM_KEY_CONTENT" > "$SWARM_KEY_LOCAL_PATH"
-    echo "  ✓ swarm.key generated and saved locally:"
-    echo "    → $SWARM_KEY_LOCAL_PATH"
-    echo "    ⚠️  Copy this key to all other nodes before running their setup script."
-  else
-    echo "  ✓ Reusing existing swarm.key:"
-    echo "    → $SWARM_KEY_LOCAL_PATH"
-  fi
-else
-  if [[ ! -f "$SWARM_KEY_LOCAL_PATH" ]]; then
-    echo "  ❌ swarm.key is required for secondary nodes but not found."
-    echo "    → Please place the swarm.key from the primary node into this folder:"
-    echo "      → $SWARM_KEY_LOCAL_PATH"
-    exit 1
-  fi
-fi
 
 # Install the swarm.key into IPFS config
 sudo mkdir -p /home/$IPFS_USER/.ipfs
@@ -336,8 +348,6 @@ run_all() {
   echo -e "
 📦 HI-pfs Setup Script $SETUP_VERSION"
 
-  
-	
   prerequisites
   setup_mount
   setup_ipfs_service
@@ -346,26 +356,25 @@ run_all() {
   setup_cloudflare_tunnel
   setup_token_server
 
-  # Optional: sync shared config and CID files
-  if [[ -f "./swarm.key" ]]; then
-    echo "  ✓ Using private swarm.key"
-    cp ./swarm.key /home/$IPFS_USER/.ipfs/swarm.key
-    chown $IPFS_USER:$IPFS_USER /home/$IPFS_USER/.ipfs/swarm.key
-  fi
+  # --- Add Bootstrap Peers ---
+	
 
-  if [[ "$IS_PRIMARY_NODE" == "n" && -f "./PEERS.txt" ]]; then
-    echo "  ✓ Adding bootstrap peers from PEERS.txt"
-    while read -r PEER; do
+if [[ "$IS_PRIMARY_NODE" == "n" && -f "$BOOTSTRAP_PEERS_PATH" ]]; then
+  echo "🔗 Adding bootstrap peers from:"
+  echo "   → $BOOTSTRAP_PEERS_PATH"
+  
+  while read -r PEER; do
+    if [[ "$PEER" == *"/p2p/"* ]]; then
+      echo "  → Adding $PEER"
       sudo -u $IPFS_USER ipfs bootstrap add "$PEER"
-    done < ./PEERS.txt
-  fi
+    fi
+  done < "$BOOTSTRAP_PEERS_PATH"
 
-  if [[ -f "/home/$IPFS_USER/ipfs-admin/shared-cids.txt" ]]; then
-    echo "  ✓ Pinning shared CIDs"
-    while read -r CID; do
-      sudo -u $IPFS_USER ipfs pin add "$CID"
-    done < /home/$IPFS_USER/ipfs-admin/shared-cids.txt
-  fi
+  echo "  ✓ Bootstrap peers added to IPFS config."
+elif [[ "$IS_PRIMARY_NODE" == "n" ]]; then
+  echo "  ⚠️  No PEERS.txt found. New node may remain isolated."
+  echo "    → Expected here: $BOOTSTRAP_PEERS_PATH"
+fi
 
   echo -e "
 ✅ IPFS node is live. Admin uploads in: $REMOTE_ADMIN_DIR"
