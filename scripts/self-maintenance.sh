@@ -7,21 +7,20 @@ set -e
 
 # Config
 USER="${IPFS_USER:-$(whoami)}"
+EMAIL="${EMAIL:-compmonks@compmonks.com}"
 HOSTNAME=$(hostname)
 LOGFILE="/home/$USER/ipfs-admin/logs/maintenance.log"
-MAILTO="${EMAIL:-compmonks@compmonks.com}"
 NEED_REBOOT=0
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
 mkdir -p "$(dirname "$LOGFILE")"
-
 echo "[$TIMESTAMP] Self-maintenance started on $HOSTNAME" >> "$LOGFILE"
 
 # 1. System update
 echo "→ Updating system packages..." >> "$LOGFILE"
 sudo apt update -qq && sudo apt upgrade -y >> "$LOGFILE" 2>&1
 
-# 2. IPFS upgrade (if outdated)
+# 2. IPFS upgrade
 echo "→ Checking IPFS version..." >> "$LOGFILE"
 INSTALLED=$(ipfs version | grep -o 'v[0-9.]*')
 LATEST=$(curl -s https://dist.ipfs.tech/go-ipfs/versions | grep -o 'v[0-9.]*' | head -n1)
@@ -68,8 +67,8 @@ fi
 
 # 6. Email report
 if command -v mail &> /dev/null; then
-  echo "📬 Sending maintenance log to $MAILTO..." >> "$LOGFILE"
-  mail -s "HI-pfs Maintenance Report ($HOSTNAME)" "$MAILTO" < "$LOGFILE"
+  echo "📬 Sending maintenance log to $EMAIL..." >> "$LOGFILE"
+  mail -s "HI-pfs Maintenance Report ($HOSTNAME)" "$EMAIL" < "$LOGFILE"
 fi
 
 # 7. Reboot if needed
