@@ -63,7 +63,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
    - Hardware:
      - tested on a **Raspberry Pi 4B**
      - **SD card 16GB**
-     - **SSD 1TB min formatted to ext4**
+     - **SSD external Hard Drive formatted to ext4**
 	  - a keybord, a mouse and a monitor at least for the install and debugging steps
      - your necessary cables to plug and power everything together
      - a case for the Pi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
@@ -84,7 +84,8 @@ curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.
 Use this command if your Pi is not a brand new install
 
 ### 3. Cloudflare Tunnel Setup
-Decide on a consitent name for your node and write it down (eg. `ipfs-node-00`, `ipfs-node-01`, etc...). Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...) 
+- Decide on a consitent name for your node and write it down (eg. `ipfs-node-00`, `ipfs-node-01`, etc...). 
+- Same thing for the subdomains we will be using (eg. `ipfs0.yourdomain.com`, `ipfs1.yourdomain.com`, etc...) 
 
 So in the end, for each node/Pi you have: 
 	- a unique node name: eg. `ipfs-node-00`
