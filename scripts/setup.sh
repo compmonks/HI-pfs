@@ -86,6 +86,60 @@ EOF
   sudo systemctl start ipfs
 }
 
+### 5. AUTO TOKEN WATCHER
+setup_auto_token_generator() {
+  echo "[6/6] Setting up automatic token generation watcher..."
+
+  WATCH_SCRIPT="/home/$IPFS_USER/scripts/auto_token_watch.sh"
+  SERVICE_FILE="/etc/systemd/system/auto-token.service"
+  LOG_FILE="/home/$IPFS_USER/ipfs-admin/logs/auto-token.log"
+
+  mkdir -p "/home/$IPFS_USER/scripts" "/home/$IPFS_USER/ipfs-admin/uploads" "$(dirname $LOG_FILE)"
+
+  cat <<EOSH | sudo tee "$WATCH_SCRIPT" > /dev/null
+#!/bin/bash
+WATCH_DIR="/home/$IPFS_USER/ipfs-admin/uploads"
+LOG_FILE="$LOG_FILE"
+GEN_SCRIPT="/home/$IPFS_USER/token-server/generate_token.py"
+EMAIL="$EMAIL"
+
+inotifywait -m -r -e create --format '%w%f' "\$WATCH_DIR" | while read newfile; do
+  if [[ -d "\$newfile" ]]; then
+    TIMESTAMP=\$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[\$TIMESTAMP] New folder detected: \$newfile" >> "\$LOG_FILE"
+
+    OUTPUT=\$(python3 "\$GEN_SCRIPT" "\$newfile")
+    echo "\$OUTPUT" >> "\$LOG_FILE"
+
+    echo -e "New Token Generated on \$HOSTNAME\n\n\$OUTPUT" | mail -s "HI-pfs Token Created" "\$EMAIL"
+  fi
+done
+EOSH
+
+  chmod +x "$WATCH_SCRIPT"
+  chown $IPFS_USER:$IPFS_USER "$WATCH_SCRIPT"
+
+  sudo tee "$SERVICE_FILE" > /dev/null <<EOF
+[Unit]
+Description=HI-pfs Auto Token Generator
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash $WATCH_SCRIPT
+Restart=always
+User=$IPFS_USER
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable auto-token.service
+  sudo systemctl start auto-token.service
+  echo "✓ Auto-token watcher enabled for uploads directory."
+}
+
 ### 5. AUTOSTART IPFS DESKTOP UI
 setup_desktop_launcher() {
   echo "[3/6] Configuring IPFS Desktop UI launch..."
@@ -197,6 +251,7 @@ run_all() {
   prerequisites
   setup_mount
   setup_ipfs_service
+  setup_auto_token_generator
   setup_desktop_launcher
   setup_caddy
   setup_token_server
