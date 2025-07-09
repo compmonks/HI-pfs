@@ -1,42 +1,91 @@
-# HI-pfs
+# HI-pfs: Distributed IPFS Node Infrastructure
 **Your ipfs network as easy and cheap one can say Hi!** (or close enough 😉)
+is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/))
+Join if you feel like that's needed!
 
 ![image](https://github.com/user-attachments/assets/ea32ff4e-e81b-4b62-83df-2d69ec9e8235)
 Source: [Link](https://blog.ipfs.tech/2022-06-09-practical-explainer-ipfs-gateways-1/)
 
+**Version:** 1.3.0  
+**Author(s):** CompMonks
+**Contributor(s):**  
+**License:** MIT
 
-**Hi-pfs** is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/))
+⸻
 
-Join if you feel like that's needed!
+## 📌 Overview
 
-## Requirements
+HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deployed on Raspberry Pi 4 devices. It provides:
+
+- Automated node provisioning (primary/secondary)
+- Secure Cloudflare-based public gateway
+- Token-protected ZIP delivery
+- Auto-replication of shared CIDs
+- Role failover and diagnostics
+
+⸻
+
+## 🚀 Features
+
+- 🌐 HTTPS Reverse Proxy with optional Auth (Caddy + Cloudflare)
+- 🔐 Token-based ZIP downloads from local admin folders
+- 📦 CID auto-pinning and shared replication across nodes
+- 🧠 Primary/Secondary roles with heartbeat detection and failover
+- 🛡️ Watchdog + Email alerts + Daily self-updates
+- 🧰 On-device diagnostics and logs
+
+⸻
+
+## 📁 File Structure (on each Pi after setup)
+
+/home/<user>/
+├── ipfs-admin/
+│   ├── shared-cids.txt
+│   ├── logs/
+│   ├── tokens/ zips/
+├── token-server/
+│   ├── server.py generate_token.py
+│   ├── zips/ tokens/ logs/ (symlinks)
+├── scripts/
+│   ├── heartbeat.sh promote.sh role-check.sh demote.sh
+│   ├── self-maintenance.sh watchdog.sh diagnostics.sh
+
+
+⸻
+
+## 🧑‍💻 Installation Instructions
+
+### 0. Requirements
    - Hardware:
      - tested on a **Raspberry Pi 4B**
      - **SD card 16GB**
      - **SSD 1TB min formatted to ext4**
 	  - a keybord, a mouse and a monitor at least for the install and debugging steps
      - your necessary cables to plug and power everything together
-     - a case for the rpi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
+     - a case for the Pi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
    - Software:
       - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
       - An existing web domain that you own.
       - A Cloudflare account (can be created later in the process).
    - A stable internet connection, **LAN** or **WAN**
 
-## Setup (for each node/Pi)
-0. On your PI 
-   - Create or update your hostname so it follows a logic across your network (eg. ipfs-host-00, ipfs-host-01, etc... ).\
-     `bash <(curl -s https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`\
-     This script will check for potential previous conflicting setup and tidy things up. It will also prompt you for your new hostname (eg. `ipfs-host-00`). You can also use this script either as the very first step in your setup or if you want to restart the config from scratch. You will need to reboot after that.
-   - Decide on a similarly consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
-   - Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
+### 1. Flash and Boot Raspberry Pi
+- Use Raspberry Pi Imager to flash Raspberry Pi OS Lite (64-bit recommended)
+- Boot, configure Wi-Fi, hostname (opt. can be left by default. It will be changed later during setup)
 
-   So in the end, for each node/Pi you have:
-      - a unique hostname: eg. `ipfs-host-00`
-      - a unique node name: eg. `ipfs-node-00`
-      - a unique subdomain name: eg. `ipfs0.yourdomain.com`
+### 2. Cleanup (Optional)
+```bash
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | bash```
+
+### 3. Cloudflare Tunnel Setup
+Decide on a consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
+Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
+So in the end, for each node/Pi you have:
+	- a unique node name: eg. `ipfs-node-00`
+   - a unique subdomain name: eg. `ipfs0.yourdomain.com`
+Later in the process, the hostname will adopt the node name.
         
-1. Create a subdomain (eg. `ipfs0.yourdomain.com`).
+### Create a subdomain (eg. `ipfs0.yourdomain.com`).
    
     If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).
 
@@ -70,7 +119,28 @@ Join if you feel like that's needed!
    **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**
    If that's the case, you will need to troubleshoot this as it depends of your setup.
  
-3. Back to the Pi -> Download and execute the main script\
-   `bash <(curl -s https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
+### 4. Bootstrap the node
+```bash
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | bash```
+- Respond to prompts: user(same as Pi admin), node name, tunnel, domin, SSD size
+- Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
 
-   Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
+## Node Roles & Behavior
+**Primary Node:**
+- Maintains shared-cids.txt
+- Runs cid_autosync and token server
+- Sends heartbeat to file every 60s
+
+**Secondary Node:**
+- Pull shared CIDs every 10 min
+- Monitor heartbeat to promote if necessary
+
+**Failover Logic:**
+- If primary heartbeat is missing for >3 min, a secondary promotes itself
+- Previous primary will demote if it rejoins
+
+## Token Download System
+Generate a ZIP with a token (primary only):
+```python3 ~/token-server/generate_token.py /path/to/folder```
+Download URL:
+```https://<node-domain>/download?token=<your-token>```
