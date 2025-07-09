@@ -4,6 +4,7 @@ import secrets
 import sys
 from datetime import datetime
 import zipfile
+import shutil
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
@@ -52,6 +53,10 @@ token_log_line = f"[{timestamp}] Generated token={token} for file={zip_filename}
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 with open(LOG_FILE, 'a') as logf:
     logf.write(token_log_line)
+
+# OPTIONAL CLEANUP
+shutil.rmtree(folder)
+print(f"🗑️ Removed original folder: {folder}")
 
 # Output
 print("✅ Token generated!")
