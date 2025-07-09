@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 import re
+import subprocess
 
 app = Flask(__name__)
 
@@ -11,16 +12,23 @@ TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
 ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
 LOG_FILE = os.path.join(BASE_DIR, 'logs', 'access.log')
 CID_FILE = os.path.expanduser('~/ipfs-admin/shared-cids.txt')
+ENV_FILE = '/etc/hi-pfs.env'
 
-# Logging utility
+# Load EMAIL from environment config
+def get_email():
+    if os.path.exists(ENV_FILE):
+        with open(ENV_FILE, 'r') as f:
+            for line in f:
+                if line.startswith("EMAIL="):
+                    return line.strip().split("=", 1)[1]
+    return "admin@example.com"
+
 def log_event(message):
     timestamp = datetime.utcnow().isoformat()
     log_line = f"[{timestamp}] {request.remote_addr} {message}\n"
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a') as f:
         f.write(log_line)
 
-# Basic token format safety
 def sanitize_token(token):
     return re.fullmatch(r"[A-Za-z0-9_\-]+", token)
 
@@ -48,6 +56,16 @@ def download():
         abort(404, description="File not found.")
 
     log_event(f"DOWNLOAD token={token} file={filename}")
+
+    # Invalidate token
+    del tokens[token]
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f, indent=2)
+
+    # Regenerate token and send email
+    EMAIL = get_email()
+    subprocess.Popen(["python3", os.path.join(BASE_DIR, "regenerate_token.py"), filename, EMAIL])
+
     return send_file(zip_path, as_attachment=True)
 
 @app.route('/shared-cids.txt', methods=['GET'])
