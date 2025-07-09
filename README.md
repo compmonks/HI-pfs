@@ -1,6 +1,7 @@
-# HI-pfs: Distributed IPFS Node Infrastructure
-**Your ipfs network as easy and cheap one can say Hi!** (or close enough 😉)
-is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/))
+# HI-pfs:\ 
+# A Distributed IPFS Node Infrastructure
+**Your ipfs network as easy and cheap one can say Hi!** (or close enough 😉).\
+It is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/)).\
 Join if you feel like that's needed!
 
 ![image](https://github.com/user-attachments/assets/ea32ff4e-e81b-4b62-83df-2d69ec9e8235)
