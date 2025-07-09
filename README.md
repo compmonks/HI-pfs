@@ -179,7 +179,7 @@ Shows IPFS status, peers, storage, services, and sync logs.
 - Not syncing CIDs → check `shared-cids.txt` and `cid-sync.log`
 
 ## Acknowledgements
-- [IPFS]()
-- [Cloudflarw]()
-- [Caddy]()
-- [Raspberry]()
+- [IPFS](https://ipfs.tech/)
+- [Cloudflare](https://www.cloudflare.com/en-gb/)
+- [Caddy](https://caddyserver.com/)
+- [Raspberry](https://www.raspberrypi.com/)
