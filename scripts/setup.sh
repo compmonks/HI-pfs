@@ -176,27 +176,109 @@ EOF
   sudo systemctl start token-server
 }
 
+
 ### 8. CID SYNC SETUP
 setup_cid_autosync() {
   echo "Setting up autosync for shared CIDs on PRIMARY node..."
   SYNC_SCRIPT="/home/$IPFS_USER/scripts/cid_autosync.sh"
   TIMER_PATH="/etc/systemd/system/cid-autosync.timer"
   SERVICE_PATH="/etc/systemd/system/cid-autosync.service"
-  
+
   sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
 #!/bin/bash
 CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
 LOG="/home/$IPFS_USER/ipfs-admin/logs/cid-sync.log"
-mkdir -p 
-
-/gateway {
-  $BACKENDS
-}
+TMP_CIDS="/tmp/current_pins.txt"
+mkdir -p \$(dirname "$CID_FILE")
+sudo -u $IPFS_USER ipfs pin ls --type=recursive | cut -d ' ' -f1 > "\$TMP_CIDS"
+cp "\$TMP_CIDS" "\$CID_FILE"
+echo "[\$(date)] CID list updated." >> "\$LOG"
 EOF
 
-  sudo systemctl enable caddy
-  sudo systemctl restart caddy
-  echo "✓ Caddy configured with Web UI at $FULL_DOMAIN and gateway /gateway endpoint."
+  chmod +x "$SYNC_SCRIPT"
+  chown $IPFS_USER:$IPFS_USER "$SYNC_SCRIPT"
+
+  sudo tee "$SERVICE_PATH" > /dev/null <<EOF
+[Unit]
+Description=Auto-sync shared CIDs from IPFS
+After=network.target ipfs.service
+
+[Service]
+Type=oneshot
+ExecStart=$SYNC_SCRIPT
+User=$IPFS_USER
+EOF
+
+  sudo tee "$TIMER_PATH" > /dev/null <<EOF
+[Unit]
+Description=Timer for CID auto-sync
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable cid-autosync.timer
+  sudo systemctl start cid-autosync.timer
+  echo "✓ CID autosync service enabled."
+}
+
+setup_cid_pull_sync() {
+  echo "Setting up CID pull for SECONDARY node..."
+  read -p "Enter the primary node domain (e.g. ipfs0.example.com): " PRIMARY_DOMAIN
+  SYNC_SCRIPT="/home/$IPFS_USER/scripts/pull_shared_cids.sh"
+  TIMER_PATH="/etc/systemd/system/pull-cids.timer"
+  SERVICE_PATH="/etc/systemd/system/pull-cids.service"
+
+  sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
+#!/bin/bash
+TARGET_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
+PRIMARY_NODE="https://$PRIMARY_DOMAIN"
+mkdir -p \$(dirname "\$TARGET_FILE")
+wget -qO "\$TARGET_FILE.new" "\$PRIMARY_NODE/shared-cids.txt" || exit 1
+if ! cmp -s "\$TARGET_FILE.new" "\$TARGET_FILE"; then
+  mv "\$TARGET_FILE.new" "\$TARGET_FILE"
+  while read -r CID; do
+    sudo -u $IPFS_USER ipfs pin add "\$CID"
+  done < "\$TARGET_FILE"
+fi
+EOF
+
+  chmod +x "$SYNC_SCRIPT"
+  chown $IPFS_USER:$IPFS_USER "$SYNC_SCRIPT"
+
+  sudo tee "$SERVICE_PATH" > /dev/null <<EOF
+[Unit]
+Description=Pull shared CIDs from primary
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=$SYNC_SCRIPT
+User=$IPFS_USER
+EOF
+
+  sudo tee "$TIMER_PATH" > /dev/null <<EOF
+[Unit]
+Description=Timer for CID pull
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable pull-cids.timer
+  sudo systemctl start pull-cids.timer
+  echo "✓ CID pull + pin enabled for secondary node."
 }
 
 ### 9. EXECUTE
