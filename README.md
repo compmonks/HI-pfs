@@ -81,18 +81,17 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 ```bash
 curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh 
 ```
+Use this command if your Pi is not a brand new install
 
 ### 3. Cloudflare Tunnel Setup
-Decide on a consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
-Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...)
-So in the end, for each node/Pi you have:
+Decide on a consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...). 
+Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...) 
+So in the end, for each node/Pi you have: 
 	- a unique node name: eg. `ipfs-node-00`
-   - a unique subdomain name: eg. `ipfs0.yourdomain.com`
-Later in the process, the hostname will adopt the node name.
-        
-### Create a subdomain (eg. `ipfs0.yourdomain.com`).
+   - a unique subdomain name: eg. `ipfs0.yourdomain.com` 
+Later in the process, the hostname will adopt the node name. 
    
-    If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).
+If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).
 
    **CLOUDFLARE SETUP**
     - Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
@@ -126,7 +125,9 @@ Later in the process, the hostname will adopt the node name.
  
 ### 4. Bootstrap the node
 ```bash
-curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | bash```
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh
+```
+
 - Respond to prompts: user(same as Pi admin), node name, tunnel, domin, SSD size
 - Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
 
