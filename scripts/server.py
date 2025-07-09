@@ -12,12 +12,15 @@ ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
 LOG_FILE = os.path.join(BASE_DIR, 'logs', 'access.log')
 CID_FILE = os.path.expanduser('~/ipfs-admin/shared-cids.txt')
 
+# Logging utility
 def log_event(message):
     timestamp = datetime.utcnow().isoformat()
     log_line = f"[{timestamp}] {request.remote_addr} {message}\n"
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a') as f:
         f.write(log_line)
 
+# Basic token format safety
 def sanitize_token(token):
     return re.fullmatch(r"[A-Za-z0-9_\-]+", token)
 
