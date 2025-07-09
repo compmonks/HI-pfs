@@ -41,7 +41,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 ⸻
 
 ## 📁 File Structure (on each Pi after setup)
-
+```
 /home/<user>/
 ├── ipfs-admin/
 │   ├── shared-cids.txt
@@ -53,7 +53,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 ├── scripts/
 │   ├── heartbeat.sh promote.sh role-check.sh demote.sh
 │   ├── self-maintenance.sh watchdog.sh diagnostics.sh
-
+```
 
 ⸻
 
