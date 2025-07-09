@@ -1,6 +1,5 @@
 #!/bin/bash
-# HI-pfs Full Node Setup Script
-# Configures Raspberry Pi with IPFS, Cloudflare, Caddy, and CID replication
+# HI-pfs Full Node Setup Script with Gateway Support and Auto CID Replication
 
 set -e
 
@@ -17,7 +16,7 @@ done
 MOUNT_POINT="/mnt/ipfs"
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
-SETUP_VERSION="v1.1.0"
+SETUP_VERSION="v1.2.0"
 
 ### 2. PREREQUISITES
 prerequisites() {
@@ -113,13 +112,30 @@ setup_caddy() {
   else
     AUTH_BLOCK=""
   fi
+
+  echo "→ Support multiple upstream nodes for load balancing? (e.g. ipfs1.local, ipfs2.local)"
+  read -p "Comma-separated upstream IPFS API hosts or leave blank: " GATEWAY_BACKENDS
+
+  BACKENDS=""
+  IFS=',' read -ra NODES <<< "$GATEWAY_BACKENDS"
+  for NODE in "${NODES[@]}"; do
+    BACKENDS+="\n  reverse_proxy $NODE:5001"
+  done
+
+  FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
   sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
-$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN {
+$FULL_DOMAIN {
   reverse_proxy 127.0.0.1:5001$AUTH_BLOCK
 }
+
+/gateway {
+  $BACKENDS
+}
 EOF
+
   sudo systemctl enable caddy
   sudo systemctl restart caddy
+  echo "✓ Caddy configured with Web UI at $FULL_DOMAIN and gateway /gateway endpoint."
 }
 
 ### 7. TOKEN SERVER
@@ -161,13 +177,43 @@ EOF
 }
 
 ### 8. CID SYNC SETUP
-setup_cid_sync() {
-  mkdir -p /home/$IPFS_USER/scripts
-
-  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
-    cat <<EOF | sudo tee /home/$IPFS_USER/scripts/cid_autosync.sh > /dev/null
+setup_cid_autosync() {
+  echo "Setting up autosync for shared CIDs on PRIMARY node..."
+  SYNC_SCRIPT="/home/$IPFS_USER/scripts/cid_autosync.sh"
+  TIMER_PATH="/etc/systemd/system/cid-autosync.timer"
+  SERVICE_PATH="/etc/systemd/system/cid-autosync.service"
+  
+  sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
 #!/bin/bash
 CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
 LOG="/home/$IPFS_USER/ipfs-admin/logs/cid-sync.log"
-TMP_CIDS="/tmp/pinned_now.txt"
 mkdir -p 
+
+/gateway {
+  $BACKENDS
+}
+EOF
+
+  sudo systemctl enable caddy
+  sudo systemctl restart caddy
+  echo "✓ Caddy configured with Web UI at $FULL_DOMAIN and gateway /gateway endpoint."
+}
+
+### 9. EXECUTE
+run_all() {
+  echo "\n🚀 Starting HI-pfs Full Node Setup v$SETUP_VERSION"
+  prerequisites
+  setup_mount
+  setup_ipfs_service
+  setup_desktop_launcher
+  setup_caddy
+  setup_token_server
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    setup_cid_autosync
+  else
+    setup_cid_pull_sync
+  fi
+  echo -e "\n✅ Node setup complete. Admin dir: $REMOTE_ADMIN_DIR"
+}
+
+run_all
