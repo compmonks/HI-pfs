@@ -8,6 +8,7 @@ import zipfile
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
 ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
+LOG_FILE = os.path.join(BASE_DIR, 'logs', 'access.log')
 
 if len(sys.argv) < 2:
     print("Usage: python3 generate_token.py <folder>")
@@ -27,6 +28,7 @@ zip_path = os.path.join(ZIPS_DIR, zip_filename)
 
 # Create zip file
 print(f"🗜️ Zipping folder: {folder}")
+os.makedirs(ZIPS_DIR, exist_ok=True)
 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
     for root, dirs, files in os.walk(folder):
         for file in files:
@@ -44,6 +46,12 @@ if os.path.exists(TOKENS_FILE):
 tokens[token] = zip_filename
 with open(TOKENS_FILE, 'w') as f:
     json.dump(tokens, f, indent=2)
+
+# Log generation
+token_log_line = f"[{timestamp}] Generated token={token} for file={zip_filename}\n"
+os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+with open(LOG_FILE, 'a') as logf:
+    logf.write(token_log_line)
 
 # Output
 print("✅ Token generated!")
