@@ -3,10 +3,8 @@
 
 set -e
 
-# GitHub base (customize to your repo)
 REPO="https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts"
 
-# Prompt user for environment
 read -p "Enter your Pi admin username (default: compmonks): " IPFS_USER
 IPFS_USER="${IPFS_USER:-compmonks}"
 
@@ -18,13 +16,10 @@ read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NO
 read -p "Enter minimum SSD size in GB (default: 1000): " MIN_SIZE_GB
 MIN_SIZE_GB="${MIN_SIZE_GB:-1000}"
 
-# Export for sub-processes
 export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB
 
-# Save to environment file for sourcing by services
 ENVFILE="/etc/hi-pfs.env"
 echo "Saving persistent environment to $ENVFILE"
-
 sudo tee "$ENVFILE" > /dev/null <<EOF
 IPFS_USER=$IPFS_USER
 EMAIL=$EMAIL
@@ -39,41 +34,41 @@ EOF
 echo "🔧 Setting hostname to $NODE_NAME..."
 sudo hostnamectl set-hostname "$NODE_NAME"
 
-# Confirm summary
-echo -e "\n🧪 Environment Summary:"
-echo "  → User:        $IPFS_USER"
-echo "  → Hostname:    $NODE_NAME"
-echo "  → Domain:      $TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
-echo "  → Primary node: $IS_PRIMARY_NODE"
-echo "  → SSD Min Size: ${MIN_SIZE_GB}GB"
+# Optional firewall
+echo "🛡️ Setting up UFW firewall rules (optional)..."
+sudo apt install -y ufw
+sudo ufw allow ssh
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
 
-# Download and run/setup scripts
+# Optional fail2ban
+sudo apt install -y fail2ban
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+
+# Download and run setup scripts
 SCRIPTS=(cloudflared.sh setup.sh self-maintenance.sh watchdog.sh diagnostics.sh)
 
 for script in "${SCRIPTS[@]}"; do
   echo "⬇️ Downloading $script from GitHub..."
-
   if [[ "$script" == "self-maintenance.sh" || "$script" == "watchdog.sh" || "$script" == "diagnostics.sh" ]]; then
     mkdir -p "/home/$IPFS_USER/scripts"
     curl -fsSL "$REPO/$script" -o "/home/$IPFS_USER/scripts/$script"
     chmod +x "/home/$IPFS_USER/scripts/$script"
     chown $IPFS_USER:$IPFS_USER "/home/$IPFS_USER/scripts/$script"
-    echo "✓ Saved $script to /home/$IPFS_USER/scripts/"
   else
     curl -fsSL "$REPO/$script" -o "/tmp/$script"
     chmod +x "/tmp/$script"
     bash "/tmp/$script"
     rm -f "/tmp/$script"
   fi
-
   echo "✅ $script processed."
 done
 
-# Setup systemd timer for self-maintenance
-echo "🔁 Configuring self-maintenance systemd timer..."
+# Systemd timers
 TIMER_PATH="/etc/systemd/system/self-maintenance.timer"
 SERVICE_PATH="/etc/systemd/system/self-maintenance.service"
-
 sudo tee "$SERVICE_PATH" > /dev/null <<EOF
 [Unit]
 Description=HI-pfs Self-Maintenance Service
@@ -99,11 +94,8 @@ Persistent=true
 WantedBy=timers.target
 EOF
 
-# Setup watchdog timer
-echo "🔁 Configuring watchdog systemd timer..."
 WD_TIMER="/etc/systemd/system/watchdog.timer"
 WD_SERVICE="/etc/systemd/system/watchdog.service"
-
 sudo tee "$WD_SERVICE" > /dev/null <<EOF
 [Unit]
 Description=HI-pfs Watchdog Service
@@ -130,14 +122,13 @@ Persistent=true
 WantedBy=timers.target
 EOF
 
-# Finalize timers
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable self-maintenance.timer watchdog.timer
 sudo systemctl start self-maintenance.timer watchdog.timer
 
-# Optional CLI alias suggestion
-echo "\n💡 To quickly check your node status, add this line to ~/.bashrc:"
+# Alias suggestion
+echo "\n💡 Add this to ~/.bashrc to check status:"
 echo "alias hi-pfs='bash /home/$IPFS_USER/scripts/diagnostics.sh'"
 echo "Then run: source ~/.bashrc"
 
