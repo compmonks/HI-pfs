@@ -19,7 +19,7 @@ Source: [Link](https://blog.ipfs.tech/2022-06-09-practical-explainer-ipfs-gatewa
 
 ## 📌 Overview
 
-HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deployed on Raspberry Pi 4 devices. It provides:
+HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deployed on Raspberry Pi devices. It provides:
 
 - Automated node provisioning (primary/secondary)
 - Secure Cloudflare-based public gateway
@@ -61,12 +61,12 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 
 ### 0. Requirements
    - Hardware:
-     - tested on a **Raspberry Pi 4B**
+     - tested on a **Raspberry Pi 4B** with 4GB RAM min.
      - **SD card 16GB**
      - **SSD external Hard Drive formatted to ext4**
-	  - a keybord, a mouse and a monitor at least for the install and debugging steps
+	  - a keyboard, a mouse and a monitor at least for the install and debugging steps
      - your necessary cables to plug and power everything together
-     - a case for the Pi to enhance cooling (eg. Argon M2 or anything else you like), and tidy up the system.
+     - a case for the Pi to enhance cooling (eg. consider passive cooling for minimal energy consumption), and tidy up the system.
    - Software:
       - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
       - An existing web domain that you own.
