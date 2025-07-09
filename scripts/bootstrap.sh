@@ -15,9 +15,11 @@ read -p "Enter a hostname for this node (e.g. ipfs-node-00): " NODE_NAME
 read -p "Enter your desired Cloudflare Tunnel subdomain (e.g. ipfs0): " TUNNEL_SUBDOMAIN
 read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
 read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
+read -p "Enter minimum SSD size in GB (default: 1000): " MIN_SIZE_GB
+MIN_SIZE_GB="${MIN_SIZE_GB:-1000}"
 
 # Export for sub-processes
-export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE
+export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB
 
 # Save to environment file for sourcing by services
 ENVFILE="/etc/hi-pfs.env"
@@ -30,6 +32,7 @@ NODE_NAME=$NODE_NAME
 TUNNEL_SUBDOMAIN=$TUNNEL_SUBDOMAIN
 CLOUDFLARE_DOMAIN=$CLOUDFLARE_DOMAIN
 IS_PRIMARY_NODE=$IS_PRIMARY_NODE
+MIN_SIZE_GB=$MIN_SIZE_GB
 EOF
 
 # Set hostname
@@ -42,6 +45,7 @@ echo "  → User:        $IPFS_USER"
 echo "  → Hostname:    $NODE_NAME"
 echo "  → Domain:      $TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
 echo "  → Primary node: $IS_PRIMARY_NODE"
+echo "  → SSD Min Size: ${MIN_SIZE_GB}GB"
 
 # Download and run/setup scripts
 SCRIPTS=(cloudflared.sh setup.sh self-maintenance.sh watchdog.sh diagnostics.sh)
