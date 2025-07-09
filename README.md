@@ -89,35 +89,29 @@ Use this command if your Pi is not a brand new install
 
 **If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).**
 
-**CLOUDFLARE SETUP**
-    - Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
-    - Add your full domain name: `yourdomain.com` with an auto scan and **check if all your DNS entries are there**. Otherwise add the missing ones manually. If your website was in a way for example that your frontend is hosted elsewhere and needs to access your backend by a subdomain (eg. `backend.yourdomain.com`), you will need to disable proxy for your `www`, `@` and `backend` DNS entries in cloudflare, redeploy your frontend, and check if your website works again and (optionally) reactivates the proxies afterwards.
-      
-    - Follow the steps to change your DNS servers. It might vary from one domain provider to another.
-    - Go to DNS tab, click Add Record:
-      - Type: `NS`
-      - Name: `ipfs0` (this makes `ipfs0.yourdomain.com`)
-      - Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers) 
-      
-      -> Repeat this step for each node you want to create 
-   
-**DOMAIN PROVIDER SETUP**
-   These steps may vary depending on your domain provider:
-   - Go to your DNS zone entries
-   - Add an NS record for the subdomain:
-      - Subdomain: `ipfs0`
-      - Type: `NS`
-      - Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
-     
-     -> Repeat this step for each node you want to create
+	**CLOUDFLARE SETUP**
+		- Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
+		- Add your full domain name: `yourdomain.com` with an auto scan and **check if all your DNS entries are there**. Otherwise add the missing ones manually. If your website was in a way for example that your frontend is hosted elsewhere and needs to access your backend by a subdomain (eg. `backend.yourdomain.com`), you will need to disable proxy for your `www`, `@` and `backend` DNS entries in cloudflare, redeploy your frontend, and check if your website works again and (optionally) reactivates the proxies afterwards.
+		- Follow the steps to change your DNS servers. It might vary from one domain provider to another.
+		- Go to DNS tab, click Add Record:
+			- Type: `NS`
+			- Name: `ipfs0` (this makes `ipfs0.yourdomain.com`)
+			- Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers)    
+		-> Repeat this step for each node you want to create 
+ 
+	**DOMAIN PROVIDER SETUP**
+		These steps may vary depending on your domain provider:
+		- Go to your DNS zone entries
+		- Add an NS record for the subdomain:
+			- Subdomain: `ipfs0`
+			- Type: `NS`
+			- Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
+  		-> Repeat this step for each node you want to create
 
-   This delegates `ipfs0.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider.
-   Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
+		- This delegates `ipfs0.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider. Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
+		- Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
 
-   Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
-
-   **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**
-   If that's the case, you will need to troubleshoot this as it depends of your setup.
+	**WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**. If that's the case, you will need to troubleshoot this as it depends of your setup.
  
 ### 4. Bootstrap the node
 ```bash
