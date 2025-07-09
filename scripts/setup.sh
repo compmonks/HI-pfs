@@ -5,7 +5,7 @@
 set -e
 
 ### 0. VERIFY INPUT ENVIRONMENT VARIABLES
-REQUIRED_VARS=(IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE)
+REQUIRED_VARS=(IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB)
 for VAR in "${REQUIRED_VARS[@]}"; do
   if [[ -z "${!VAR}" ]]; then
     echo "❌ Missing environment variable: $VAR. Run via bootstrap.sh or export manually."
@@ -15,7 +15,6 @@ done
 
 ### 1. GLOBAL CONFIG
 MOUNT_POINT="/mnt/ipfs"
-MIN_SIZE_GB=1000
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
 SETUP_VERSION="v1.1.0"
@@ -103,7 +102,7 @@ EOF
   chmod +x "/home/$IPFS_USER/.config/autostart/ipfs-desktop.desktop"
 }
 
-### 6. CADDY CONFIG (HTTPS + optional AUTH)
+### 6. CADDY CONFIG
 setup_caddy() {
   echo "[4/6] Configuring Caddy..."
   read -p "Enable password protection for Web UI? (y/n): " ENABLE_AUTH
@@ -123,9 +122,9 @@ EOF
   sudo systemctl restart caddy
 }
 
-### 7. TOKEN SERVER + CID SYNC
+### 7. TOKEN SERVER
 setup_token_server() {
-  echo "[5/6] Installing token server + CID sync logic..."
+  echo "[5/6] Installing token server..."
   mkdir -p /home/$IPFS_USER/token-server
   mkdir -p $REMOTE_ADMIN_DIR/{zips,tokens,logs}
   ln -sfn $REMOTE_ADMIN_DIR/zips /home/$IPFS_USER/token-server/zips
@@ -137,7 +136,6 @@ setup_token_server() {
     curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o /home/$IPFS_USER/token-server/generate_token.py
     chmod +x /home/$IPFS_USER/token-server/generate_token.py
   fi
-
   chmod +x /home/$IPFS_USER/token-server/server.py
   chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
 
@@ -156,17 +154,20 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
+
   sudo systemctl daemon-reload
   sudo systemctl enable token-server
   sudo systemctl start token-server
+}
 
-  if [[ "$IS_PRIMARY_NODE" == "n" ]]; then
-    read -p "Enter the PRIMARY node's domain (e.g. ipfs0.example.com): " PRIMARY_DOMAIN
+### 8. CID SYNC SETUP
+setup_cid_sync() {
+  mkdir -p /home/$IPFS_USER/scripts
 
-    # Create pull_shared_cids.sh
-    sudo tee /home/$IPFS_USER/token-server/pull_shared_cids.sh > /dev/null <<EOCID
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    cat <<EOF | sudo tee /home/$IPFS_USER/scripts/cid_autosync.sh > /dev/null
 #!/bin/bash
-PRIMARY_NODE="https://$PRIMARY_DOMAIN"
-TARGET_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
-LOG_FILE="/home/$IPFS_USER/ipfs-admin/.synced-cids"
-TIMESTAMP=
+CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
+LOG="/home/$IPFS_USER/ipfs-admin/logs/cid-sync.log"
+TMP_CIDS="/tmp/pinned_now.txt"
+mkdir -p 
