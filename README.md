@@ -178,6 +178,36 @@ Shows IPFS status, peers, storage, services, and sync logs.
 - Can’t access WebUI → ensure cloudflared and caddy are active
 - Not syncing CIDs → check `shared-cids.txt` and `cid-sync.log`
 
+⸻
+
+##Remote Upload Data (Access via SSH + shared folder)
+- from your remote computer, SSH into your primary node
+```
+ssh <USERNAME>@<SUBDOMAIN>
+```
+where `<USERNAME>`is the admin user set for your primary node (be carfeul as your primary node may change. Check your logs first), `<SUBDOMAIN>`is your subdomain as set in cloudflare (eg. `ipfs0.yourdoamin.com`).
+
+- upload your folder
+```
+scp -r ./<LOCALFOLDER> <USERNAME>@<SUBDOMAIN>:/home/<USERNAME>/ipfs-admin/uploads/
+```
+where `<LOCALFOLDER>` is the folder you want to upload (make sure you run this command at the right location in your file system or adjust the folder path to be absolute)
+
+- generate token
+```
+ssh <USERNAME>@<SUBDOMAIN>
+python3 ~/token-server/generate_token.py ~/ipfs-admin/uploads/<LOCALFOLDER>
+```
+- you will then receive the token, the name of zipped folder and the download link
+```
+✅ Token generated!
+🔐 Token: oTeYBxa9sVNSlOwutCTkWg
+📦 File: myproject_20250627-1530.zip
+🌐 Link: https://ipfs0.example.com/download?token=oTeYBxa9sVNSlOwutCTkWg
+```
+
+⸻
+
 ## Acknowledgements
 - [IPFS](https://ipfs.tech/)
 - [Cloudflare](https://www.cloudflare.com/en-gb/)
