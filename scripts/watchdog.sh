@@ -50,7 +50,7 @@ curl -s http://127.0.0.1:5001/api/v0/version >/dev/null || {
 }
 
 # Email diagnostics if failure occurred
-if [[ "$ALERT_TRIGGERED" -eq 1 && -x "$(command -v mail)" ]]; then
+if [[ "$ALERT_TRIGGERED" -eq 1 && -x "$DIAG_SCRIPT" && -x "$(command -v mail)" ]]; then
   REPORT=$(bash "$DIAG_SCRIPT" 2>&1)
   echo -e "$STATUS_SUMMARY\n\n📋 Diagnostics Report:\n$REPORT" | mail -s "HI-pfs Watchdog Alert: $HOSTNAME" "$EMAIL"
 fi
