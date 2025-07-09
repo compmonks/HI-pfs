@@ -1,5 +1,5 @@
 #!/bin/bash
-# HI-pfs Full Node Setup Script with Gateway Support and Auto CID Replication
+# HI-pfs Full Node Setup Script with Gateway Support and Auto CID Replication, and Auto Token Generator
 
 set -e
 
@@ -89,6 +89,18 @@ EOF
 ### 5. AUTO TOKEN WATCHER
 setup_auto_token_generator() {
   echo "[6/6] Setting up automatic token generation watcher..."
+  
+  mkdir -p /home/$IPFS_USER/token-server
+  cd /home/$IPFS_USER/token-server
+
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/server.py -o server.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o generate_token.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/regenerate_token.py -o regenerate_token.py
+
+  chmod +x *.py
+  chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
+
+  echo "✓ Token server scripts downloaded and permissioned."
 
   WATCH_SCRIPT="/home/$IPFS_USER/scripts/auto_token_watch.sh"
   SERVICE_FILE="/etc/systemd/system/auto-token.service"
