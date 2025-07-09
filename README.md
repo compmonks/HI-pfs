@@ -1,14 +1,14 @@
 # HI-pfs: A Distributed IPFS Node Infrastructure
-**Your ipfs network as easy and cheap one can say Hi!** (or close enough 😉).\
+**Your ipfs network as easy and cheap one can say Hi!** (or close enough 😉).
 
 **Version:** 1.3.0  
 **Author(s):** CompMonks
 **Contributor(s):**  
 **License:** MIT
-\
+
 
 It is an open, free and community-driven project to enable as many creatives as possible to store and distribute their digital assets at their advantage. It is based on IPFS' _Open protocols to store, verify, and share data across distributed networks_ ([Link](https://ipfs.tech/)).
-\
+
 
 Join if you feel like that's needed!
 
