@@ -198,13 +198,8 @@ where `<LOCALFOLDER>` is the folder you want to upload (make sure you run this c
 ssh <USERNAME>@<SUBDOMAIN>
 python3 ~/token-server/generate_token.py ~/ipfs-admin/uploads/<LOCALFOLDER>
 ```
-- you will then receive the token, the name of zipped folder and the download link
-```
-✅ Token generated!
-🔐 Token: oTeYBxa9sVNSlOwutCTkWg
-📦 File: myproject_20250627-1530.zip
-🌐 Link: https://ipfs0.example.com/download?token=oTeYBxa9sVNSlOwutCTkWg
-```
+- you will then receive the token, the name of zipped folder and the download link by email
+- Once the zip downloaded, the access token will be revoked and a new one will be genrated and sent again by email. 
 
 ⸻
 
