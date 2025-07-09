@@ -84,16 +84,18 @@ curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.
 Use this command if your Pi is not a brand new install
 
 ### 3. Cloudflare Tunnel Setup
-Decide on a consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...). 
-Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...) 
+Decide on a consitent name for your node and write it down (eg. `ipfs-node-00`, `ipfs-node-01`, etc...). Same thing for the subdomains we will be using (eg. ipfs0.yourdomain.com, ipfs1.yourdomain.com, etc...) 
+
 So in the end, for each node/Pi you have: 
 	- a unique node name: eg. `ipfs-node-00`
-   - a unique subdomain name: eg. `ipfs0.yourdomain.com` 
+	- a unique subdomain name: eg. `ipfs0.yourdomain.com` 
+
 Later in the process, the hostname will adopt the node name. 
-   
+
+
 If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).
 
-   **CLOUDFLARE SETUP**
+**CLOUDFLARE SETUP**
     - Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
     - Add your full domain name: `yourdomain.com` with an auto scan and **check if all your DNS entries are there**. Otherwise add the missing ones manually. If your website was in a way for example that your frontend is hosted elsewhere and needs to access your backend by a subdomain (eg. `backend.yourdomain.com`), you will need to disable proxy for your `www`, `@` and `backend` DNS entries in cloudflare, redeploy your frontend, and check if your website works again and (optionally) reactivates the proxies afterwards.
       
@@ -101,11 +103,11 @@ If you own a domain already and want to keep things together, a subdomain might 
     - Go to DNS tab, click Add Record:
       - Type: `NS`
       - Name: `ipfs0` (this makes `ipfs0.yourdomain.com`)
-      - Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers)
+      - Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers) 
       
-      -> Repeat this step for each node you want to create
+      -> Repeat this step for each node you want to create 
    
-   **DOMAIN PROVIDER SETUP**
+**DOMAIN PROVIDER SETUP**
    These steps may vary depending on your domain provider:
    - Go to your DNS zone entries
    - Add an NS record for the subdomain:
