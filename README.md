@@ -79,7 +79,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 
 ### 2. Cleanup (Optional)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | bash```
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | bash
 
 ### 3. Cloudflare Tunnel Setup
 Decide on a consitent name for your node and write it down (eg. ipfs-node-00, ipfs-node-01, etc...).
