@@ -100,13 +100,13 @@ Use this command if your Pi is not a brand new install
 -> Repeat this step for each node you want to create 
  
 **DOMAIN PROVIDER SETUP**
-		These steps may vary depending on your domain provider:
-		- Go to your DNS zone entries
-		- Add an NS record for the subdomain:
-			- Subdomain: `ipfs0`
-			- Type: `NS`
-			- Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
-		-> Repeat this step for each node you want to create
+These steps may vary depending on your domain provider:
+- Go to your DNS zone entries
+- Add an NS record for the subdomain:
+	- Subdomain: `ipfs0`
+	- Type: `NS`
+	- Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
+-> Repeat this step for each node you want to create
 
 - This delegates `ipfs0.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider. Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
 - Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
@@ -140,3 +140,10 @@ Generate a ZIP with a token (primary only):
 ```python3 ~/token-server/generate_token.py /path/to/folder```
 Download URL:
 ```https://<node-domain>/download?token=<your-token>```
+
+## CID Auto-Replication
+- On primary: new CIDs pinned locally and appended to shared-cids.txt
+- On secondaries: regularly fetch + pin new CIDs
+
+## Maintenance & Monitoring
+```hi-pfs status```
