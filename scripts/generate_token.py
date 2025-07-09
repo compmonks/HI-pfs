@@ -54,9 +54,12 @@ os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 with open(LOG_FILE, 'a') as logf:
     logf.write(token_log_line)
 
-# OPTIONAL CLEANUP
-shutil.rmtree(folder)
-print(f"🗑️ Removed original folder: {folder}")
+# Cleanup original folder after success
+try:
+    shutil.rmtree(folder)
+    print(f"🧹 Original folder '{folder}' deleted.")
+except Exception as e:
+    print(f"⚠️ Warning: Could not delete folder '{folder}': {e}")
 
 # Output
 print("✅ Token generated!")
