@@ -146,4 +146,40 @@ Download URL:
 - On secondaries: regularly fetch + pin new CIDs
 
 ## Maintenance & Monitoring
-```hi-pfs status```
+**Diagnostics**
+```hi-pfs status````
+Shows IPFS status, peers, storage, services, and sync logs.
+
+**Watchdog**
+- Checks IPFS, cloudflared, and token-server every 15min
+- Restarts services and sends email alert if needed
+
+**Self-Maintenance**
+- Daily updates system, IPFS, cloudflared, and token-server
+- Sends report email and reboots if needed
+
+⸻
+
+## Replication & Scaling
+- To scale the network, clone the SD card
+- Update hostname and re-run bootstrap.sh
+- Each new node joins, syncs CIDs, and adapts role
+
+⸻
+
+## Email Alerts
+- All alerts (watchdog + maintenance) are emailed to configured address
+- Logs are stored in ~/ipfs-admin/logs
+
+⸻
+
+## Troubleshooting
+- `ipfs.service` not running → run `systemctl status ipfs`
+- Can’t access WebUI → ensure cloudflared and caddy are active
+- Not syncing CIDs → check `shared-cids.txt` and `cid-sync.log`
+
+## Acknowledgements
+- [IPFS]()
+- [Cloudflarw]()
+- [Caddy]()
+- [Raspberry]()
