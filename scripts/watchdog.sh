@@ -2,8 +2,10 @@
 # HI-pfs Watchdog: Monitor & auto-recover IPFS, cloudflared, and token-server
 
 USER="${IPFS_USER:-$(whoami)}"
+EMAIL="${EMAIL:-compmonks@compmonks.com}"
+HOSTNAME="${NODE_NAME:-$(hostname)}"
 LOGFILE="/home/$USER/ipfs-admin/logs/watchdog.log"
-MAILTO="${EMAIL:-compmonks@compmonks.com}"
+DIAG_SCRIPT="/home/$USER/scripts/diagnostics.sh"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 STATUS_SUMMARY=""
 ALERT_TRIGGERED=0
@@ -35,7 +37,7 @@ check_and_restart() {
   fi
 }
 
-log "Running watchdog health check on node $(hostname)..."
+log "Running watchdog health check on node $HOSTNAME..."
 
 check_and_restart "ipfs"
 check_and_restart "cloudflared"
@@ -47,9 +49,10 @@ curl -s http://127.0.0.1:5001/api/v0/version >/dev/null || {
   ALERT_TRIGGERED=1
 }
 
-# Email summary if any failure was detected
+# Email diagnostics if failure occurred
 if [[ "$ALERT_TRIGGERED" -eq 1 && -x "$(command -v mail)" ]]; then
-  echo -e "$STATUS_SUMMARY" | mail -s "HI-pfs Watchdog Alert: $(hostname)" "$MAILTO"
+  REPORT=$(bash "$DIAG_SCRIPT" 2>&1)
+  echo -e "$STATUS_SUMMARY\n\n📋 Diagnostics Report:\n$REPORT" | mail -s "HI-pfs Watchdog Alert: $HOSTNAME" "$EMAIL"
 fi
 
 log "Watchdog check complete."
