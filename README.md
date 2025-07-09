@@ -62,8 +62,8 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 ### 0. Requirements
    - Hardware:
      - tested on a **Raspberry Pi 4B** with 4GB RAM min.
-     - **SD card 16GB**
-     - **SSD external Hard Drive formatted to ext4**
+     - **SD card 16GB** class 10 U3 min.
+     - **SSD external Hard Drive formatted to ext4** 1TB seems a good size to start with.
 	  - a keyboard, a mouse and a monitor at least for the install and debugging steps
      - your necessary cables to plug and power everything together
      - a case for the Pi to enhance cooling (eg. consider passive cooling for minimal energy consumption), and tidy up the system.
