@@ -16,7 +16,7 @@ done
 MOUNT_POINT="/mnt/ipfs"
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
-SETUP_VERSION="v1.2.0"
+SETUP_VERSION="v1.3.0"
 
 ### 2. PREREQUISITES
 prerequisites() {
@@ -62,8 +62,8 @@ setup_ipfs_service() {
   sudo -u $IPFS_USER ipfs init --profile=server
   sudo -u $IPFS_USER ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
   sudo -u $IPFS_USER ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-  sudo -u $IPFS_USER ipfs config --json Identity.NodeName \"$NODE_NAME\"
-  sudo -u $IPFS_USER ipfs config --json Addresses.Announce \"[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]\"
+  sudo -u $IPFS_USER ipfs config --json Identity.NodeName "$NODE_NAME"
+  sudo -u $IPFS_USER ipfs config --json Addresses.Announce "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
 
   sudo tee /etc/systemd/system/ipfs.service > /dev/null <<EOF
 [Unit]
@@ -143,6 +143,7 @@ setup_token_server() {
   echo "[5/6] Installing token server..."
   mkdir -p /home/$IPFS_USER/token-server
   mkdir -p $REMOTE_ADMIN_DIR/{zips,tokens,logs}
+  echo "${IS_PRIMARY_NODE}" > "$REMOTE_ADMIN_DIR/role.txt"
   ln -sfn $REMOTE_ADMIN_DIR/zips /home/$IPFS_USER/token-server/zips
   ln -sfn $REMOTE_ADMIN_DIR/tokens /home/$IPFS_USER/token-server/tokens
   ln -sfn $REMOTE_ADMIN_DIR/logs /home/$IPFS_USER/token-server/logs
@@ -176,109 +177,18 @@ EOF
   sudo systemctl start token-server
 }
 
-
 ### 8. CID SYNC SETUP
-setup_cid_autosync() {
-  echo "Setting up autosync for shared CIDs on PRIMARY node..."
-  SYNC_SCRIPT="/home/$IPFS_USER/scripts/cid_autosync.sh"
-  TIMER_PATH="/etc/systemd/system/cid-autosync.timer"
-  SERVICE_PATH="/etc/systemd/system/cid-autosync.service"
-
-  sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
-#!/bin/bash
-CID_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
-LOG="/home/$IPFS_USER/ipfs-admin/logs/cid-sync.log"
-TMP_CIDS="/tmp/current_pins.txt"
-mkdir -p \$(dirname "$CID_FILE")
-sudo -u $IPFS_USER ipfs pin ls --type=recursive | cut -d ' ' -f1 > "\$TMP_CIDS"
-cp "\$TMP_CIDS" "\$CID_FILE"
-echo "[\$(date)] CID list updated." >> "\$LOG"
-EOF
-
-  chmod +x "$SYNC_SCRIPT"
-  chown $IPFS_USER:$IPFS_USER "$SYNC_SCRIPT"
-
-  sudo tee "$SERVICE_PATH" > /dev/null <<EOF
-[Unit]
-Description=Auto-sync shared CIDs from IPFS
-After=network.target ipfs.service
-
-[Service]
-Type=oneshot
-ExecStart=$SYNC_SCRIPT
-User=$IPFS_USER
-EOF
-
-  sudo tee "$TIMER_PATH" > /dev/null <<EOF
-[Unit]
-Description=Timer for CID auto-sync
-
-[Timer]
-OnCalendar=hourly
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-  sudo systemctl daemon-reload
-  sudo systemctl enable cid-autosync.timer
-  sudo systemctl start cid-autosync.timer
-  echo "✓ CID autosync service enabled."
-}
-
-setup_cid_pull_sync() {
-  echo "Setting up CID pull for SECONDARY node..."
-  read -p "Enter the primary node domain (e.g. ipfs0.example.com): " PRIMARY_DOMAIN
-  SYNC_SCRIPT="/home/$IPFS_USER/scripts/pull_shared_cids.sh"
-  TIMER_PATH="/etc/systemd/system/pull-cids.timer"
-  SERVICE_PATH="/etc/systemd/system/pull-cids.service"
-
-  sudo tee "$SYNC_SCRIPT" > /dev/null <<EOF
-#!/bin/bash
-TARGET_FILE="/home/$IPFS_USER/ipfs-admin/shared-cids.txt"
-PRIMARY_NODE="https://$PRIMARY_DOMAIN"
-mkdir -p \$(dirname "\$TARGET_FILE")
-wget -qO "\$TARGET_FILE.new" "\$PRIMARY_NODE/shared-cids.txt" || exit 1
-if ! cmp -s "\$TARGET_FILE.new" "\$TARGET_FILE"; then
-  mv "\$TARGET_FILE.new" "\$TARGET_FILE"
-  while read -r CID; do
-    sudo -u $IPFS_USER ipfs pin add "\$CID"
-  done < "\$TARGET_FILE"
-fi
-EOF
-
-  chmod +x "$SYNC_SCRIPT"
-  chown $IPFS_USER:$IPFS_USER "$SYNC_SCRIPT"
-
-  sudo tee "$SERVICE_PATH" > /dev/null <<EOF
-[Unit]
-Description=Pull shared CIDs from primary
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=$SYNC_SCRIPT
-User=$IPFS_USER
-EOF
-
-  sudo tee "$TIMER_PATH" > /dev/null <<EOF
-[Unit]
-Description=Timer for CID pull
-
-[Timer]
-OnBootSec=10min
-OnUnitActiveSec=30min
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-  sudo systemctl daemon-reload
-  sudo systemctl enable pull-cids.timer
-  sudo systemctl start pull-cids.timer
-  echo "✓ CID pull + pin enabled for secondary node."
+deploy_cid_sync() {
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    echo "[6/6] Enabling autosync on primary node..."
+    sudo systemctl enable cid-autosync.timer
+    sudo systemctl start cid-autosync.timer
+  else
+    echo "[6/6] Pulling shared CIDs from primary..."
+    curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/pull_shared_cids.sh -o /home/$IPFS_USER/scripts/pull_shared_cids.sh
+    chmod +x /home/$IPFS_USER/scripts/pull_shared_cids.sh
+    (crontab -l 2>/dev/null; echo "*/10 * * * * /home/$IPFS_USER/scripts/pull_shared_cids.sh") | crontab -
+  fi
 }
 
 ### 9. EXECUTE
@@ -290,11 +200,7 @@ run_all() {
   setup_desktop_launcher
   setup_caddy
   setup_token_server
-  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
-    setup_cid_autosync
-  else
-    setup_cid_pull_sync
-  fi
+  deploy_cid_sync
   echo -e "\n✅ Node setup complete. Admin dir: $REMOTE_ADMIN_DIR"
 }
 
