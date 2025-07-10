@@ -39,6 +39,13 @@ EOF
 echo "🔧 Setting hostname to $NODE_NAME..."
 sudo hostnamectl set-hostname "$NODE_NAME"
 
+# ✅ Fix hostname resolution in /etc/hosts
+if ! grep -q "$NODE_NAME" /etc/hosts; then
+  echo "🛠 Adding $NODE_NAME to /etc/hosts..."
+  echo "127.0.1.1 $NODE_NAME" | sudo tee -a /etc/hosts > /dev/null
+  echo "✓ Hostname resolution fixed in /etc/hosts."
+fi
+
 # Confirm summary
 echo -e "\n🧪 Environment Summary:"
 echo "  → User:        $IPFS_USER"
