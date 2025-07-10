@@ -79,7 +79,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 
 ### 2. Cleanup (Optional)
 ```bash
-bash<(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh) 
+bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh) 
 ```
 Use this command if your Pi is not a brand new install
 
