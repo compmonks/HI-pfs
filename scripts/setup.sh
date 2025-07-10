@@ -73,13 +73,36 @@ setup_mount() {
 
 ### 4. IPFS SYSTEMD SERVICE
 setup_ipfs_service() {
-  echo "[2/6] IPFS config and daemon setup..."
-  sudo -u $IPFS_USER ipfs init --profile=server
+  echo "[2/6] Validating IPFS installation and setting up service..."
+
+  # Check IPFS binary
+  if ! command -v ipfs &>/dev/null; then
+    echo "❌ IPFS command not found. Reinstalling..."
+    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+  else
+    echo "✓ IPFS installed: $(ipfs version)"
+  fi
+
+  # Ensure .ipfs config exists
+  if [[ ! -f "/home/$IPFS_USER/.ipfs/config" ]]; then
+    echo "⚙️ Initializing IPFS config for $IPFS_USER..."
+    sudo -u $IPFS_USER ipfs init --profile=server
+  fi
+
+  # Double-check that mount exists
+  if [[ ! -d "$MOUNT_POINT" || ! -d "$IPFS_PATH" ]]; then
+    echo "❌ /mnt/ipfs or its subfolder is missing. SSD might not be mounted properly."
+    echo "Aborting IPFS service setup until mount issue is resolved."
+    return 1
+  fi
+
+  echo "🔧 Applying IPFS configurations..."
   sudo -u $IPFS_USER ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
   sudo -u $IPFS_USER ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-  sudo -u $IPFS_USER ipfs config --json Identity.NodeName "$NODE_NAME"
+  sudo -u $IPFS_USER ipfs config --json Identity.NodeName "\"$NODE_NAME\""
   sudo -u $IPFS_USER ipfs config --json Addresses.Announce "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
 
+  echo "📝 Creating IPFS systemd service..."
   sudo tee /etc/systemd/system/ipfs.service > /dev/null <<EOF
 [Unit]
 Description=IPFS daemon
@@ -88,7 +111,7 @@ Requires=mnt-ipfs.mount
 
 [Service]
 User=$IPFS_USER
-ExecStartPre=/bin/bash -c 'test -d $MOUNT_POINT || exit 1'
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 ExecStart=/usr/local/bin/ipfs daemon --enable-gc
 Restart=on-failure
 LimitNOFILE=10240
@@ -97,9 +120,18 @@ LimitNOFILE=10240
 WantedBy=multi-user.target
 EOF
 
+  echo "🔄 Reloading systemd and enabling IPFS service..."
+  sudo systemctl daemon-reexec
   sudo systemctl daemon-reload
   sudo systemctl enable ipfs
-  sudo systemctl start ipfs
+  sudo systemctl restart ipfs
+
+  sleep 2
+  if systemctl is-active --quiet ipfs; then
+    echo "✅ IPFS service is running."
+  else
+    echo "❌ IPFS service failed to start. Check logs with: journalctl -u ipfs -e"
+  fi
 }
 
 ### 5. AUTO TOKEN WATCHER
