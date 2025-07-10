@@ -115,7 +115,7 @@ These steps may vary depending on your domain provider:
  
 ### 4. Bootstrap the node
 ```bash
-curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
 ```
 
 - Respond to prompts: user(same as Pi admin), node name, tunnel, domin, SSD size
