@@ -22,10 +22,18 @@ SETUP_VERSION="v1.3.0"
 prerequisites() {
   echo "[0/6] Installing prerequisites..."
   sudo apt update
-  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils
+  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release
 
   if ! command -v ipfs &>/dev/null; then
+    echo "→ IPFS not found, installing..."
     curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+  else
+    echo "✓ IPFS already installed: $(ipfs version)"
+  fi
+
+  if ! command -v ipfs &>/dev/null; then
+    echo "❌ IPFS install failed. Aborting."
+    exit 1
   fi
 
   if ! command -v caddy &>/dev/null; then
@@ -43,17 +51,24 @@ prerequisites() {
   pip3 install flask flask-mail requests
 }
 
+
 ### 3. SSD MOUNT
 setup_mount() {
   echo "[1/6] Mounting SSD..."
   DEV=$(lsblk -dnpo NAME,SIZE | awk -v min=$((MIN_SIZE_GB * 1024**3)) '$2+0 >= min {print $1; exit}')
   [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
   PART="${DEV}1"
+
   sudo mkdir -p "$MOUNT_POINT"
-  sudo mount "$PART" "$MOUNT_POINT" || exit 1
+  sudo mount "$PART" "$MOUNT_POINT" || {
+    echo "❌ Failed to mount $PART"
+    exit 1
+  }
+
   UUID=$(blkid -s UUID -o value "$PART")
-  grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab > /dev/null
+  grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT ext4 defaults,nofail,x-systemd.requires=network-online.target 0 2" | sudo tee -a /etc/fstab > /dev/null
   sudo chown -R $IPFS_USER:$IPFS_USER "$MOUNT_POINT"
+  echo "✓ SSD mounted at $MOUNT_POINT"
 }
 
 ### 4. IPFS SYSTEMD SERVICE
@@ -73,6 +88,7 @@ Requires=mnt-ipfs.mount
 
 [Service]
 User=$IPFS_USER
+ExecStartPre=/bin/bash -c 'test -d $MOUNT_POINT || exit 1'
 ExecStart=/usr/local/bin/ipfs daemon --enable-gc
 Restart=on-failure
 LimitNOFILE=10240
