@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs Watchdog: Monitor & auto-recover IPFS, cloudflared, and token-server
 
