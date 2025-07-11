@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # =============================================================================
 # HI-pfs: Full Node Setup Script
