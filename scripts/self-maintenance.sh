@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs: Self-Maintenance Script
 # Automatically updates system, IPFS, cloudflared, and token server.
