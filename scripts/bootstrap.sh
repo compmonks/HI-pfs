@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs Bootstrap Script — Interactive Master Installer
 # Author: CompMonks / HI-pfs
