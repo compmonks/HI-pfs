@@ -54,6 +54,31 @@ install_cloudflared() {
   fi
 }
 
+# == Tunnel Conflict Check ==
+EXISTS=$(cloudflared tunnel list --output json | grep -w "\"Name\": \"$TUNNEL_NAME\"" || true)
+
+if [[ -n "$EXISTS" ]]; then
+  echo "⚠️ A tunnel named '$TUNNEL_NAME' already exists in Cloudflare."
+  select OPTION in "Reuse existing tunnel" "Delete and recreate" "Abort"; do
+    case $OPTION in
+      "Reuse existing tunnel")
+        echo "🔁 Reusing existing tunnel..."
+        ;;
+      "Delete and recreate")
+        echo "🧹 Deleting tunnel remotely..."
+        cloudflared tunnel delete "$TUNNEL_NAME" || true
+        rm -f "$CREDENTIAL_FILE"
+        break
+        ;;
+      "Abort")
+        echo "🚫 Aborting setup."
+        exit 1
+        ;;
+    esac
+    break
+  done
+fi
+
 ### Step 2: Authenticate tunnel (opens browser once)
 authenticate_cloudflare() {
   echo "🌐 Authenticating tunnel (opens browser)..."
