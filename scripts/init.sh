@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs INIT - Resets a Raspberry Pi to prepare for fresh node setup
 # Author: CompMonks / HI-pfs
