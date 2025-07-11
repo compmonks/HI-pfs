@@ -1,8 +1,12 @@
 #!/bin/bash
-# HI-pfs INIT - Resets a Raspberry Pi to prepare for fresh node setup
+# HI-pfs INIT - Reset a Raspberry Pi for a clean HI-pfs node setup
+# This script removes all services, configs, and mount points previously used by the HI-pfs infrastructure.
 
-echo "🧹 HI-pfs Node Cleanup Starting..."
+set -e
 
+echo -e "\n🧹 [HI-pfs INIT] Starting cleanup and reset process...\n"
+
+### SERVICES TO RESET
 SERVICES=(
   ipfs
   caddy
@@ -10,48 +14,59 @@ SERVICES=(
   token-server
 )
 
-# Stop and disable relevant services
-echo "→ Stopping services..."
+echo "→ Stopping and disabling systemd services..."
 for svc in "${SERVICES[@]}"; do
-  sudo systemctl stop "$svc" 2>/dev/null
-  sudo systemctl disable "$svc" 2>/dev/null
+  echo "  • Stopping service: $svc"
+  sudo systemctl stop "$svc" 2>/dev/null || true
+  echo "  • Disabling service: $svc"
+  sudo systemctl disable "$svc" 2>/dev/null || true
 done
 
-# Remove service files
-echo "→ Removing systemd service files..."
+echo "→ Removing service files from /etc/systemd/system/..."
 for svc in "${SERVICES[@]}"; do
-  sudo rm -f "/etc/systemd/system/${svc}.service"
+  SERVICE_FILE="/etc/systemd/system/${svc}.service"
+  if [[ -f "$SERVICE_FILE" ]]; then
+    echo "  • Removing $SERVICE_FILE"
+    sudo rm -f "$SERVICE_FILE"
+  fi
 done
+
+echo "→ Reloading systemd daemon..."
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
-# Unmount and clear SSD if mounted at /mnt/ipfs
-echo "→ Unmounting /mnt/ipfs if mounted..."
-sudo umount /mnt/ipfs 2>/dev/null
+### UNMOUNT AND DELETE STORAGE
+echo -e "\n→ Checking for /mnt/ipfs..."
+if mountpoint -q /mnt/ipfs; then
+  echo "  • Unmounting /mnt/ipfs..."
+  sudo umount /mnt/ipfs
+fi
+
+echo "  • Removing /mnt/ipfs directory..."
 sudo rm -rf /mnt/ipfs
 
-# Clear user-specific config/data
-echo "→ Removing user configs (if exist)..."
+### REMOVE USER CONFIGS
+echo -e "\n→ Removing user-specific configs and data..."
 rm -rf ~/token-server ~/Dropbox/IPFS-Logs ~/ipfs-admin
 rm -rf ~/.ipfs ~/.config/IPFS ~/.cache/ipfs
 rm -rf ~/.config/autostart/ipfs-desktop.desktop
-rm -f ~/sync-now.sh
-rm -f ~/swarm.key
-rm -f ~/PEERS.txt ~/shared-cids.txt
+rm -f ~/sync-now.sh ~/swarm.key ~/PEERS.txt ~/shared-cids.txt
 
-# Clean up Caddy and Cloudflare
-sudo rm -rf /etc/caddy/Caddyfile /etc/cloudflared/config.yml
-sudo rm -rf /root/.cloudflared
+### REMOVE CADDY AND CLOUDFLARE CONFIGS
+echo -e "\n→ Cleaning up Caddy and Cloudflare configuration files..."
+sudo rm -rf /etc/caddy/Caddyfile /etc/cloudflared/config.yml /root/.cloudflared
 
-# Remove IPFS binary (optional)
-echo "→ Checking for IPFS binary..."
+### REMOVE IPFS BINARY
 if command -v ipfs &> /dev/null; then
+  echo "→ Removing IPFS binary..."
   sudo rm -f "$(command -v ipfs)"
 fi
 
-# Optional: remove cloudflared
+### REMOVE CLOUDFLARED BINARY
 if command -v cloudflared &> /dev/null; then
+  echo "→ Removing cloudflared binary..."
   sudo rm -f "$(command -v cloudflared)"
 fi
 
-echo "✅ Cleanup complete. Reboot now or run ./bootstrap.sh to begin fresh setup."
+echo -e "\n✅ [HI-pfs INIT] Cleanup complete."
+echo "🔁 Reboot recommended or run ./bootstrap.sh to begin a new setup."
