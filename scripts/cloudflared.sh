@@ -14,9 +14,15 @@ print_header() {
 
 ### Step 0: Prompt user input
 prompt_input() {
-  echo "🧾 Gathering configuration..."
-  read -rp "→ Enter unique tunnel name (e.g. ipfs-node-02): " TUNNEL_NAME
-  read -rp "→ Enter full subdomain for public access (e.g. ipfs2.example.com): " SUBDOMAIN
+  # === Accept Arguments or Fallback to Prompt ===
+  TUNNEL_NAME="${1:-}"
+  SUBDOMAIN="${2:-}"
+  
+  if [[ -z "$TUNNEL_NAME" || -z "$SUBDOMAIN" ]]; then
+    echo "🔧 Missing arguments. Switching to interactive mode..."
+    read -rp "→ Enter unique tunnel name (e.g. ipfs-node-02): " TUNNEL_NAME
+    read -rp "→ Enter full subdomain (e.g. ipfs2.example.com): " SUBDOMAIN
+  fi
 
   CONFIG_DIR="/etc/cloudflared"
   CREDENTIAL_FILE="/root/.cloudflared/${TUNNEL_NAME}.json"
