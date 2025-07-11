@@ -5,6 +5,15 @@
 
 set -euo pipefail
 
+### Load environment
+ENV_FILE="/etc/hi-pfs.env"
+if [[ -f "$ENV_FILE" ]]; then
+  source "$ENV_FILE"
+else
+  echo "❌ Missing environment file: $ENV_FILE"
+  exit 1
+fi
+
 ### Function: Print header
 print_header() {
   echo "===================================================="
@@ -15,8 +24,8 @@ print_header() {
 ### Step 0: Prompt user input
 prompt_input() {
   # === Accept Arguments or Fallback to Prompt ===
-  TUNNEL_NAME="${1:-}"
-  SUBDOMAIN="${2:-}"
+  TUNNEL_NAME="${NODE_NAME}"
+	SUBDOMAIN="${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}"
   
   if [[ -z "$TUNNEL_NAME" || -z "$SUBDOMAIN" ]]; then
     echo "🔧 Missing arguments. Switching to interactive mode..."
