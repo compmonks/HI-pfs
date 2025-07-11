@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # Optional: Demote current primary node to secondary
 
