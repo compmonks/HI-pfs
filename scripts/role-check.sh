@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # Check if primary node is alive; promote self if needed
 
