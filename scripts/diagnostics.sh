@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs diagnostics: run with `bash diagnostics.sh` or `hi-pfs status`
 
