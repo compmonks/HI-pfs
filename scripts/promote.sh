@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # Promote this node from secondary to primary
 
