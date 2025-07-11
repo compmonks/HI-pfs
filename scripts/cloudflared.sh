@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # HI-pfs: Cloudflare Tunnel Setup Script
 # This script installs `cloudflared`, creates and configures a tunnel with a public subdomain,
