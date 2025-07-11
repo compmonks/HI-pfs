@@ -68,7 +68,7 @@ rm -f "$USER_HOME/PEERS.txt" "$USER_HOME/shared-cids.txt"
 #--------------------------------------#
 log "→ Clearing Caddy and Cloudflared configurations..."
 sudo rm -rf /etc/caddy/Caddyfile /etc/cloudflared/config.yml
-sudo rm -rf /root/.cloudflared
+sudo rm -rf /etc/cloudflared /root/.cloudflared ~/.cloudflared /usr/local/bin/cloudflared /usr/bin/cloudflared
 sudo rm -f /etc/hi-pfs.env
 
 # Optional: remove IPFS and cloudflared binaries
