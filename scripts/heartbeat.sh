@@ -1,3 +1,4 @@
+# pylint: skip-file
 #!/bin/bash
 # Update heartbeat file regularly (primary node only)
 
