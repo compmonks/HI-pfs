@@ -1,14 +1,22 @@
 #!/bin/bash
-# HI-pfs Full Node Setup Script with Gateway Support and Auto CID Replication, and Auto Token Generator
+# =============================================================================
+# HI-pfs: Full Node Setup Script
+# Sets up IPFS node with gateway load balancing, automatic CID/token management,
+# secure reverse proxy, and dynamic role switching (primary/secondary)
+# =============================================================================
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
 ### 0. VERIFY INPUT ENVIRONMENT VARIABLES
 REQUIRED_VARS=(IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB)
+echo "🔍 Verifying environment variables..."
 for VAR in "${REQUIRED_VARS[@]}"; do
-  if [[ -z "${!VAR}" ]]; then
+  if [[ -z "${!VAR:-}" ]]; then
     echo "❌ Missing environment variable: $VAR. Run via bootstrap.sh or export manually."
     exit 1
+  else
+    echo "✓ $VAR = ${!VAR}"
   fi
 done
 
@@ -17,6 +25,7 @@ MOUNT_POINT="/mnt/ipfs"
 IPFS_PATH="$MOUNT_POINT/ipfs-data"
 REMOTE_ADMIN_DIR="/home/$IPFS_USER/ipfs-admin"
 SETUP_VERSION="v1.3.0"
+echo "🌍 Detected setup version: $SETUP_VERSION"
 
 ### 2. PREREQUISITES
 prerequisites() {
@@ -37,6 +46,7 @@ prerequisites() {
   fi
 
   if ! command -v caddy &>/dev/null; then
+    echo "→ Installing Caddy (HTTPS reverse proxy)..."
     sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
@@ -45,6 +55,7 @@ prerequisites() {
   fi
 
   if ! command -v chromium-browser &>/dev/null; then
+    echo "→ Installing Chromium for desktop WebUI..."
     sudo apt install -y chromium-browser
   fi
 
@@ -54,7 +65,7 @@ prerequisites() {
 
 ### 3. SSD MOUNT
 setup_mount() {
-  echo "[1/6] Mounting SSD..."
+  echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
   DEV=$(lsblk -dnpo NAME,SIZE | awk -v min=$((MIN_SIZE_GB * 1024**3)) '$2+0 >= min {print $1; exit}')
   [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
   PART="${DEV}1"
