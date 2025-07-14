@@ -94,7 +94,7 @@ for script in "${SCRIPTS[@]}"; do
 done
 
 #-------------#
-# 6. RUN CLOUDLFARED & SETUP.SH
+# 6. RUN CLOUDFLARED & SETUP.SH
 #-------------#
 log "⚙️ Running cloudflared.sh setup..."
 bash "$SCRIPTS_DIR/cloudflared.sh"

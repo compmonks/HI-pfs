@@ -9,7 +9,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
 ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
 
-if len(sys.argv) < 2:
+# Expect two arguments: the ZIP filename and the destination email address
+if len(sys.argv) < 3:
     print("Usage: regenerate_token.py <zip_filename> <email>")
     sys.exit(1)
 
@@ -38,10 +39,10 @@ with open(TOKENS_FILE, 'w') as f:
 # Send email notification
 url = f"http://<your-node>:8082/download?token={token}"
 subject = "🔁 HI-pfs Token Renewed"
-message = f"Your download token has expired and was renewed.
+message = f"""Your download token has expired and was renewed.
 
- File: {zip_filename}
- Link: {url}"
+File: {zip_filename}
+Link: {url}"""
 
 os.system(f'echo "{message}" | mail -s "{subject}" "{email}"')
 
