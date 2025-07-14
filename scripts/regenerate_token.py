@@ -38,10 +38,10 @@ with open(TOKENS_FILE, 'w') as f:
 # Send email notification
 url = f"http://<your-node>:8082/download?token={token}"
 subject = "🔁 HI-pfs Token Renewed"
-message = f"Your download token has expired and was renewed.
+message = f"""Your download token has expired and was renewed.
 
- File: {zip_filename}
- Link: {url}"
+File: {zip_filename}
+Link: {url}"""
 
 os.system(f'echo "{message}" | mail -s "{subject}" "{email}"')
 
