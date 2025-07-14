@@ -11,6 +11,20 @@ TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
 ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
 LOG_FILE = os.path.join(BASE_DIR, 'logs', 'access.log')
 
+def load_tokens():
+    if not os.path.exists(TOKENS_FILE):
+        return {}
+    try:
+        with open(TOKENS_FILE, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+def save_tokens(tokens):
+    os.makedirs(os.path.dirname(TOKENS_FILE), exist_ok=True)
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f, indent=2)
+
 if len(sys.argv) < 2:
     print("Usage: python3 generate_token.py <folder>")
     sys.exit(1)
@@ -39,14 +53,10 @@ with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
 
 # Load or create token registry
 os.makedirs(os.path.dirname(TOKENS_FILE), exist_ok=True)
-tokens = {}
-if os.path.exists(TOKENS_FILE):
-    with open(TOKENS_FILE, 'r') as f:
-        tokens = json.load(f)
+tokens = load_tokens()
 
 tokens[token] = zip_filename
-with open(TOKENS_FILE, 'w') as f:
-    json.dump(tokens, f, indent=2)
+save_tokens(tokens)
 
 # Log generation
 token_log_line = f"[{timestamp}] Generated token={token} for file={zip_filename}\n"

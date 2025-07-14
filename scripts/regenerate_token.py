@@ -9,6 +9,20 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
 ZIPS_DIR = os.path.join(BASE_DIR, 'zips')
 
+def load_tokens():
+    if not os.path.exists(TOKENS_FILE):
+        return {}
+    try:
+        with open(TOKENS_FILE, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+def save_tokens(tokens):
+    os.makedirs(os.path.dirname(TOKENS_FILE), exist_ok=True)
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f, indent=2)
+
 # Expect two arguments: the ZIP filename and the destination email address
 if len(sys.argv) < 3:
     print("Usage: regenerate_token.py <zip_filename> <email>")
@@ -27,14 +41,10 @@ token = secrets.token_urlsafe(16)
 
 # Load or create token registry
 os.makedirs(os.path.dirname(TOKENS_FILE), exist_ok=True)
-tokens = {}
-if os.path.exists(TOKENS_FILE):
-    with open(TOKENS_FILE, 'r') as f:
-        tokens = json.load(f)
+tokens = load_tokens()
 
 tokens[token] = zip_filename
-with open(TOKENS_FILE, 'w') as f:
-    json.dump(tokens, f, indent=2)
+save_tokens(tokens)
 
 # Send email notification
 url = f"http://<your-node>:8082/download?token={token}"
