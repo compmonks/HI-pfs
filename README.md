@@ -201,6 +201,17 @@ python3 ~/token-server/generate_token.py ~/ipfs-admin/uploads/<LOCALFOLDER>
 - you will then receive the token, the name of zipped folder and the download link by email
 - Once the zip downloaded, the access token will be revoked and a new one will be generated and sent again by email.
 
+## Running Tests
+
+To execute the unit tests locally:
+
+```bash
+pip install pytest
+pytest
+```
+
+This will run all tests under the `tests/` directory.
+
 ⸻
 
 ## Acknowledgements
