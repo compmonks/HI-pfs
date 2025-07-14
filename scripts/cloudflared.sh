@@ -37,7 +37,7 @@ read_params() {
   fi
 
   CONFIG_DIR="/etc/cloudflared"
-  CREDENTIAL_FILE="/root/.cloudflared/${TUNNEL_NAME}.json"
+  CREDENTIAL_FILE="$HOME/.cloudflared/${TUNNEL_NAME}.json"
   CONFIG_FILE="${CONFIG_DIR}/config.yml"
   SERVICE_NAME="cloudflared"
 
