@@ -163,6 +163,7 @@ main() {
   install_cloudflared
   handle_existing_tunnel
   authenticate_cloudflare
+  handle_existing_tunnel
   create_tunnel
   write_config_file
   map_dns
