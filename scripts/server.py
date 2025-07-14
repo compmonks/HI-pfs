@@ -5,7 +5,20 @@ from datetime import datetime
 import re
 import subprocess
 
+try:
+    from utils import setup_logger, report_exception
+except ImportError:  # when running as a package
+    from .utils import setup_logger, report_exception
+
+logger = setup_logger(__name__)
+
 app = Flask(__name__)
+
+if hasattr(app, 'errorhandler'):
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        report_exception(logger, 'server_exception', e)
+        return 'Internal Server Error', 500
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TOKENS_FILE = os.path.join(BASE_DIR, 'tokens', 'tokens.json')
@@ -28,6 +41,7 @@ def log_event(message):
     log_line = f"[{timestamp}] {request.remote_addr} {message}\n"
     with open(LOG_FILE, 'a') as f:
         f.write(log_line)
+    logger.info(message)
 
 def sanitize_token(token):
     return re.fullmatch(r"[A-Za-z0-9_\-]+", token)
@@ -47,12 +61,16 @@ def load_tokens():
             return json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         log_event(f"ERROR reading tokens file: {e}")
+        report_exception(logger, 'load_tokens', e)
         return {}
 
 def save_tokens(tokens):
     os.makedirs(os.path.dirname(TOKENS_FILE), exist_ok=True)
-    with open(TOKENS_FILE, 'w') as f:
-        json.dump(tokens, f, indent=2)
+    try:
+        with open(TOKENS_FILE, 'w') as f:
+            json.dump(tokens, f, indent=2)
+    except OSError as e:
+        report_exception(logger, 'save_tokens', e)
 
 @app.route('/download', methods=['GET'])
 def download():
@@ -101,4 +119,7 @@ def health():
     return "OK", 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8082)
+    try:
+        app.run(host='0.0.0.0', port=8082)
+    except Exception as e:
+        report_exception(logger, 'flask_run', e)
