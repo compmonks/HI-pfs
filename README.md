@@ -185,7 +185,7 @@ Shows IPFS status, peers, storage, services, and sync logs.
 ```
 ssh <USERNAME>@<SUBDOMAIN>
 ```
-where `<USERNAME>`is the admin user set for your primary node (be carfeul as your primary node may change. Check your logs first), `<SUBDOMAIN>`is your subdomain as set in cloudflare (eg. `ipfs0.yourdoamin.com`).
+where `<USERNAME>` is the admin user set for your primary node (be careful as your primary node may change. Check your logs first), `<SUBDOMAIN>` is your subdomain as set in cloudflare (eg. `ipfs0.yourdomain.com`).
 
 - upload your folder
 ```
@@ -199,7 +199,7 @@ ssh <USERNAME>@<SUBDOMAIN>
 python3 ~/token-server/generate_token.py ~/ipfs-admin/uploads/<LOCALFOLDER>
 ```
 - you will then receive the token, the name of zipped folder and the download link by email
-- Once the zip downloaded, the access token will be revoked and a new one will be genrated and sent again by email. 
+- Once the zip downloaded, the access token will be revoked and a new one will be generated and sent again by email.
 
 ⸻
 
