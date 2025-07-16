@@ -66,9 +66,9 @@ install_cloudflared() {
 }
 
 handle_existing_tunnel() {
-  local exists
-  exists=$(cloudflared tunnel list --output json | grep -w "\"Name\": \"$TUNNEL_NAME\"" || true)
-  if [[ -z "$exists" ]]; then
+  local list_output
+  list_output=$(cloudflared tunnel list --output json 2>/dev/null || true)
+  if ! echo "$list_output" | grep -q "\"Name\"[[:space:]]*:[[:space:]]*\"$TUNNEL_NAME\""; then
     return
   fi
 
