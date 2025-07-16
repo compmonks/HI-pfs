@@ -28,7 +28,14 @@ log "🚀 HI-pfs Bootstrap Initializing..."
 read -p "Enter your Pi admin username (default: compmonks): " IPFS_USER
 IPFS_USER="${IPFS_USER:-compmonks}"
 
-read -p "Enter your email for node alerts and sync reports: " EMAIL
+while true; do
+  read -p "Enter your email for node alerts and sync reports: " EMAIL
+  if [[ "$EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+    break
+  else
+    echo "Invalid email address. Please try again."
+  fi
+done
 read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
 read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
 read -p "Enter minimum SSD size in GB (default: 1000): " MIN_SIZE_GB
