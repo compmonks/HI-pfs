@@ -36,13 +36,21 @@ prerequisites() {
 
   if ! command -v ipfs &>/dev/null; then
     echo "→ IPFS not found, installing..."
-    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
+      echo "❌ Failed to download IPFS installer." >&2
+      exit 1
+    fi
+    if ! sudo bash /tmp/ipfs-install.sh; then
+      echo "❌ IPFS install failed. Aborting." >&2
+      exit 1
+    fi
+    rm -f /tmp/ipfs-install.sh
   else
     echo "✓ IPFS already installed: $(ipfs version)"
   fi
 
   if ! command -v ipfs &>/dev/null; then
-    echo "❌ IPFS install failed. Aborting."
+    echo "❌ IPFS install failed. Aborting." >&2
     exit 1
   fi
 
@@ -90,7 +98,19 @@ setup_ipfs_service() {
   # Check IPFS binary
   if ! command -v ipfs &>/dev/null; then
     echo "❌ IPFS command not found. Reinstalling..."
-    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
+      echo "❌ Failed to download IPFS installer." >&2
+      return 1
+    fi
+    if ! sudo bash /tmp/ipfs-install.sh; then
+      echo "❌ IPFS install failed." >&2
+      return 1
+    fi
+    rm -f /tmp/ipfs-install.sh
+    if ! command -v ipfs &>/dev/null; then
+      echo "❌ IPFS install failed." >&2
+      return 1
+    fi
   else
     echo "✓ IPFS installed: $(ipfs version)"
   fi
