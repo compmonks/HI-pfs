@@ -84,8 +84,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/script
 Use this command if your Pi is not a brand new install
 
 ### 3. Cloudflare Tunnel Setup
-- Decide on a consitent name for your node and write it down (eg. `ipfs-node-00`, `ipfs-node-01`, etc...). 
-- Same thing for the subdomains we will be using (eg. `ipfs0.yourdomain.com`, `ipfs1.yourdomain.com`, etc...) 
+Hostnames and subdomains are generated automatically by `bootstrap.sh`. The first
+node uses `ipfs-node-00` and `ipfs0.yourdomain.com`. When adding a new node, the
+script asks for the hostname or IP of the previous node to derive the next names.
 
 **If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).**
 
@@ -118,7 +119,8 @@ These steps may vary depending on your domain provider:
 bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
 ```
 
-- Respond to prompts: user(same as Pi admin), node name, tunnel, domin, SSD size
+- Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD size.
+- For additional nodes, provide the previous node hostname or IP when prompted.
 - Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
 
 ## Node Roles & Behavior
@@ -162,7 +164,7 @@ Shows IPFS status, peers, storage, services, and sync logs.
 
 ## Replication & Scaling
 - To scale the network, clone the SD card
-- Update hostname and re-run bootstrap.sh
+- Run `bootstrap.sh` on the new device and provide the previous node when asked
 - Each new node joins, syncs CIDs, and adapts role
 
 ⸻

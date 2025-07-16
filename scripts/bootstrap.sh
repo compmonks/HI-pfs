@@ -29,12 +29,35 @@ read -p "Enter your Pi admin username (default: compmonks): " IPFS_USER
 IPFS_USER="${IPFS_USER:-compmonks}"
 
 read -p "Enter your email for node alerts and sync reports: " EMAIL
-read -p "Enter a hostname for this node (e.g. ipfs-node-00): " NODE_NAME
-read -p "Enter your desired Cloudflare Tunnel subdomain (e.g. ipfs0): " TUNNEL_SUBDOMAIN 
 read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
 read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
 read -p "Enter minimum SSD size in GB (default: 1000): " MIN_SIZE_GB
 MIN_SIZE_GB="${MIN_SIZE_GB:-1000}"
+
+# Generate node hostname and tunnel name automatically
+generate_names() {
+  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
+    NODE_NAME="ipfs-node-00"
+    TUNNEL_SUBDOMAIN="ipfs0"
+  else
+    read -p "Enter hostname or IP of the last node: " LAST_NODE
+    log "🔗 Fetching info from $LAST_NODE..."
+    LAST_ENV=$(ssh "${IPFS_USER}@${LAST_NODE}" "cat /etc/hi-pfs.env" 2>/dev/null || true)
+    if [[ -z "$LAST_ENV" ]]; then
+      echo "❌ Unable to retrieve environment from $LAST_NODE"
+      exit 1
+    fi
+    LAST_NODE_NAME=$(echo "$LAST_ENV" | grep '^NODE_NAME=' | cut -d= -f2)
+    IDX=$(echo "$LAST_NODE_NAME" | grep -o '[0-9]*$')
+    IDX=${IDX#0}
+    IDX=${IDX:-0}
+    NEXT_IDX=$((IDX + 1))
+    NODE_NAME=$(printf 'ipfs-node-%02d' "$NEXT_IDX")
+    TUNNEL_SUBDOMAIN=$(printf 'ipfs%d' "$NEXT_IDX")
+  fi
+}
+
+generate_names
 
 #-------------#
 # 2. EXPORT ENVIRONMENT
