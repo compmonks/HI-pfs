@@ -71,6 +71,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
       - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
       - An existing web domain that you own.
       - A Cloudflare account (can be created later in the process).
+      - IPFS Desktop app installed (easier for node-wise maintenance): [linux amd64 version](https://github.com/ipfs/ipfs-desktop/releases/latest)
    - A stable internet connection, **LAN** or **WAN**
 
 ### 1. Flash and Boot Raspberry Pi
