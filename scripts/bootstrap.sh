@@ -20,7 +20,72 @@ log() {
   [[ "$VERBOSE" == true ]] && echo "$LOG_TAG $1"
 }
 
+#--------------------------------------#
+# OPTIONAL CLEANUP (INIT.SH LOGIC)
+#--------------------------------------#
+cleanup_node() {
+  local USER_HOME="/home/$(whoami)"
+  local SERVICES=(ipfs caddy cloudflared token-server cid-autosync heartbeat watchdog)
+  local TIMERS=(self-maintenance.timer watchdog.timer heartbeat.timer cid-autosync.timer)
+
+  log "🧹 Starting HI-pfs node cleanup..."
+
+  log "→ Stopping and disabling HI-pfs related services..."
+  for svc in "${SERVICES[@]}"; do
+    sudo systemctl stop "$svc" 2>/dev/null || true
+    sudo systemctl disable "$svc" 2>/dev/null || true
+  done
+
+  for timer in "${TIMERS[@]}"; do
+    sudo systemctl stop "$timer" 2>/dev/null || true
+    sudo systemctl disable "$timer" 2>/dev/null || true
+  done
+
+  log "→ Removing systemd unit files..."
+  for unit in "${SERVICES[@]}" "${TIMERS[@]}"; do
+    sudo rm -f "/etc/systemd/system/$unit.service" "/etc/systemd/system/$unit.timer"
+  done
+
+  sudo systemctl daemon-reexec
+  sudo systemctl daemon-reload
+
+  log "→ Attempting to unmount SSD from /mnt/ipfs..."
+  sudo umount /mnt/ipfs 2>/dev/null || log "  ⚠️ SSD already unmounted."
+  sudo rm -rf /mnt/ipfs
+
+  log "→ Removing user and app config directories..."
+  rm -rf "$USER_HOME/token-server"
+  rm -rf "$USER_HOME/ipfs-admin"
+  rm -rf "$USER_HOME/Dropbox/IPFS-Logs"
+  rm -rf "$USER_HOME/.ipfs" "$USER_HOME/.config/IPFS" "$USER_HOME/.cache/ipfs"
+  rm -rf "$USER_HOME/.config/autostart/ipfs-desktop.desktop"
+  rm -f "$USER_HOME/sync-now.sh" "$USER_HOME/swarm.key"
+  rm -f "$USER_HOME/PEERS.txt" "$USER_HOME/shared-cids.txt"
+
+  log "→ Clearing Caddy and Cloudflared configurations..."
+  sudo rm -rf /etc/caddy/Caddyfile /etc/cloudflared/config.yml
+  sudo rm -rf /etc/cloudflared /root/.cloudflared ~/.cloudflared /usr/local/bin/cloudflared /usr/bin/cloudflared
+  sudo rm -f /etc/hi-pfs.env
+
+  if command -v ipfs &> /dev/null; then
+    log "→ Removing IPFS binary..."
+    sudo rm -f "$(command -v ipfs)"
+  fi
+
+  if command -v cloudflared &> /dev/null; then
+    log "→ Removing cloudflared binary..."
+    sudo rm -f "$(command -v cloudflared)"
+  fi
+
+  log "✅ Cleanup complete. Reboot recommended before next install."
+}
+
 log "🚀 HI-pfs Bootstrap Initializing..."
+
+read -p "Run cleanup before bootstrap? (y/N): " RUN_CLEANUP
+if [[ "$RUN_CLEANUP" =~ ^[Yy]$ ]]; then
+  cleanup_node
+fi
 
 #-------------#
 # 1. PROMPT ENV VARS
