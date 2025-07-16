@@ -68,7 +68,8 @@ prerequisites() {
     sudo apt install -y chromium-browser
   fi
 
-  pip3 install flask flask-mail requests
+  # Handle Debian's PEP 668 "externally-managed" environment
+  pip3 install --break-system-packages flask flask-mail requests
 }
 
 
