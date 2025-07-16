@@ -72,6 +72,7 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
       - An existing web domain that you own.
       - A Cloudflare account (can be created later in the process).
       - IPFS Desktop app installed (easier for node-wise maintenance): [linux amd64 version](https://github.com/ipfs/ipfs-desktop/releases/latest)
+        The `setup.sh` script requires the `ipfs-desktop` command and will abort if it's not detected.
    - A stable internet connection, **LAN** or **WAN**
 
 ### 1. Flash and Boot Raspberry Pi
