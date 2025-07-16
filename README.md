@@ -79,10 +79,10 @@ HI-pfs is a robust, scalable, and self-maintaining network of IPFS nodes deploye
 - Boot, configure Wi-Fi, hostname (opt. can be left by default. It will be changed later during setup)
 
 ### 2. Cleanup (Optional)
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh) 
-```
-Use this command if your Pi is not a brand new install
+`bootstrap.sh` now integrates the cleanup procedure formerly provided by
+`init.sh`. When launching the bootstrap you will be prompted to run this
+cleanup first. Choose **y** if you are reusing a Pi or recovering from a failed
+install. You can still execute `init.sh` manually if needed.
 
 ### 3. Cloudflare Tunnel Setup
 Hostnames and subdomains are generated automatically by `bootstrap.sh`. The first
