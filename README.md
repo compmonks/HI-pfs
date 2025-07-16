@@ -48,24 +48,96 @@ account:
 │   ├── logs/
 │   ├── tokens/    zips/
 ├── token-server/
-│   ├── server.py  generate_token.py
-│   ├── zips/  tokens/  logs/ (symlinks)
-└── scripts/
-    ├── heartbeat.sh  promote.sh  role-check.sh  demote.sh
-    ├── self-maintenance.sh  watchdog.sh  diagnostics.sh
+│   ├── server.py generate_token.py
+│   ├── zips/ tokens/ logs/ (symlinks)
+├── scripts/
+│   ├── heartbeat.sh promote.sh role-check.sh demote.sh
+│   ├── self-maintenance.sh watchdog.sh diagnostics.sh
 ```
 
-## Node Roles & Failover
+⸻
 
-**Primary Node**
-- Maintains `shared-cids.txt`
-- Runs CID auto-sync and the token server
-- Writes a heartbeat every minute
+## 🧑‍💻 Installation Instructions
 
-**Secondary Node**
-- Pins CIDs from the primary every ten minutes
-- Monitors the heartbeat; if it disappears for more than three minutes the node
-  promotes itself
+### 0. Requirements
+   - Hardware:
+     - tested on a **Raspberry Pi 4B** with 4GB RAM min.
+     - **SD card 16GB** class 10 U3 min.
+     - **SSD external Hard Drive formatted to ext4** 1TB seems a good size to start with.
+	  - a keyboard, a mouse and a monitor at least for the install and debugging steps
+     - your necessary cables to plug and power everything together
+     - a case for the Pi to enhance cooling (eg. consider passive cooling for minimal energy consumption), and tidy up the system.
+   - Software:
+      - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
+      - An existing web domain that you own.
+      - A Cloudflare account (can be created later in the process).
+      - IPFS Desktop app installed (easier for node-wise maintenance): [linux amd64 version](https://github.com/ipfs/ipfs-desktop/releases/latest)
+        The `setup.sh` script requires the `ipfs-desktop` command and will abort if it's not detected.
+   - A stable internet connection, **LAN** or **WAN**
+
+### 1. Flash and Boot Raspberry Pi
+- Use Raspberry Pi Imager to flash Raspberry Pi OS Lite (64-bit recommended)
+- Boot, configure Wi-Fi, hostname (opt. can be left by default. It will be changed later during setup)
+
+### 2. Cleanup (Optional)
+`bootstrap.sh` now integrates the cleanup procedure formerly provided by
+`init.sh`. When launching the bootstrap you will be prompted to run this
+cleanup first. Choose **y** if you are reusing a Pi or recovering from a failed
+install. You can still execute `init.sh` manually if needed.
+
+### 3. Cloudflare Tunnel Setup
+Hostnames and subdomains are generated automatically by `bootstrap.sh`. The first
+node uses `ipfs-node-00` and `ipfs0.yourdomain.com`. When adding a new node, the
+script asks for the hostname or IP of the previous node to derive the next names.
+
+**If you own a domain already and want to keep things together, a subdomain might be a good choice to link your ipfs network to. Feel free to try other scenarios and share your steps with a pull so we can document it here and make it accessible for others. You may also want to consider to do this step at once for all your nodes (if you know how many you will have), or do it progressively every time you want to scale your network with a new node (one node and Pi at a time).**
+
+**CLOUDFLARE SETUP**
+- Go to [Cloudflare](https://www.cloudflare.com/) and create an account with a **FREE** plan (or more if you want).
+- Add your full domain name: `yourdomain.com` with an auto scan and **check if all your DNS entries are there**. Otherwise add the missing ones manually. If your website was in a way for example that your frontend is hosted elsewhere and needs to access your backend by a subdomain (eg. `backend.yourdomain.com`), you will need to disable proxy for your `www`, `@` and `backend` DNS entries in cloudflare, redeploy your frontend, and check if your website works again and (optionally) reactivates the proxies afterwards.
+- Follow the steps to change your DNS servers. It might vary from one domain provider to another.
+- Go to DNS tab, click Add Record:
+	- Type: `NS`
+	- Name: `ipfs0` (this makes `ipfs0.yourdomain.com`)
+   - Content: `ipfs0.ns.cloudflare.com` (Cloudflare name servers)    
+-> Repeat this step for each node you want to create 
+ 
+**DOMAIN PROVIDER SETUP**
+These steps may vary depending on your domain provider:
+- Go to your DNS zone entries
+- Add an NS record for the subdomain:
+	- Subdomain: `ipfs0`
+	- Type: `NS`
+	- Target: Same Cloudflare name servers as above (eg. `ipfs0.ns.cloudflare.com`)
+-> Repeat this step for each node you want to create
+
+- This delegates `ipfs0.yourdomain.com` to Cloudflare while keeping the rest of your domain on your domain provider. Wait for Cloudflare to have propagated the changes and check that your website and emails are working. This may take more than 24H. Check the scheduled operations in your domain provider to make sure. If you have deactivated DNSSEC in your domain provider and would like to reactivate it, you can then do so by going to the panel of your domain on Cloudflare DNS > Settings > DNSSEC > Activate.
+- Once the domain is properly activated on Cloudflare, for to SSL/TLS > Choose **Full** or **Full (Strict)** Encryption if your origin has SSL. Also enable **Always use HTTPS**.
+
+**WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**. If that's the case, you will need to troubleshoot this as it depends of your setup.
+ 
+### 4. Bootstrap the node
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
+```
+
+- Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD size.
+- For additional nodes, provide the previous node hostname or IP when prompted.
+- Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
+
+## Node Roles & Behavior
+**Primary Node:**
+- Maintains shared-cids.txt
+- Runs cid_autosync and token server
+- Sends heartbeat to file every 60s
+
+**Secondary Node:**
+- Pull shared CIDs every 10 min
+- Monitor heartbeat to promote if necessary
+
+**Failover Logic:**
+- If primary heartbeat is missing for >3 min, a secondary promotes itself
+- Previous primary will demote if it rejoins
 
 When the old primary rejoins it demotes automatically.
 
@@ -90,6 +162,12 @@ When the old primary rejoins it demotes automatically.
 - `watchdog.sh` restarts `ipfs`, `cloudflared` and `token-server` if they crash
 - `self-maintenance.sh` performs daily package upgrades and can reboot
 - Diagnostics and logs reside in `~/ipfs-admin/logs`
+
+## Replication & Scaling
+
+- To scale the network, clone the SD card
+- Run `bootstrap.sh` on the new device and provide the previous node when asked
+- Each new node joins, syncs CIDs, and adapts role
 
 ## Token Downloads
 

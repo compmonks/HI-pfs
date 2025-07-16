@@ -31,18 +31,36 @@ echo "🌍 Detected setup version: $SETUP_VERSION"
 ### 2. PREREQUISITES
 prerequisites() {
   echo "[0/6] Installing prerequisites..."
+
+  # Ensure the IPFS Desktop application is present
+  if ! command -v ipfs-desktop &>/dev/null; then
+    echo "❌ IPFS Desktop not detected."
+    echo "Please install it first: https://github.com/ipfs/ipfs-desktop/releases/latest"
+    exit 1
+  else
+    echo "✓ IPFS Desktop detected"
+  fi
+
   sudo apt update
   sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release
 
   if ! command -v ipfs &>/dev/null; then
     echo "→ IPFS not found, installing..."
-    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
+      echo "❌ Failed to download IPFS installer." >&2
+      exit 1
+    fi
+    if ! sudo bash /tmp/ipfs-install.sh; then
+      echo "❌ IPFS install failed. Aborting." >&2
+      exit 1
+    fi
+    rm -f /tmp/ipfs-install.sh
   else
     echo "✓ IPFS already installed: $(ipfs version)"
   fi
 
   if ! command -v ipfs &>/dev/null; then
-    echo "❌ IPFS install failed. Aborting."
+    echo "❌ IPFS install failed. Aborting." >&2
     exit 1
   fi
 
@@ -60,7 +78,8 @@ prerequisites() {
     sudo apt install -y chromium-browser
   fi
 
-  pip3 install flask flask-mail requests
+  # Handle Debian's PEP 668 "externally-managed" environment
+  pip3 install --break-system-packages flask flask-mail requests
 }
 
 
@@ -90,7 +109,19 @@ setup_ipfs_service() {
   # Check IPFS binary
   if ! command -v ipfs &>/dev/null; then
     echo "❌ IPFS command not found. Reinstalling..."
-    curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash
+    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
+      echo "❌ Failed to download IPFS installer." >&2
+      return 1
+    fi
+    if ! sudo bash /tmp/ipfs-install.sh; then
+      echo "❌ IPFS install failed." >&2
+      return 1
+    fi
+    rm -f /tmp/ipfs-install.sh
+    if ! command -v ipfs &>/dev/null; then
+      echo "❌ IPFS install failed." >&2
+      return 1
+    fi
   else
     echo "✓ IPFS installed: $(ipfs version)"
   fi
