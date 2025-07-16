@@ -32,37 +32,18 @@ echo "🌍 Detected setup version: $SETUP_VERSION"
 prerequisites() {
   echo "[0/6] Installing prerequisites..."
 
-  # Ensure the IPFS Desktop application is present
-  if ! command -v ipfs-desktop &>/dev/null; then
-    echo "❌ IPFS Desktop not detected."
-    echo "Please install it first: https://github.com/ipfs/ipfs-desktop/releases/latest"
+  # Ensure Kubo (ipfs CLI) is installed beforehand
+  if ! command -v ipfs &>/dev/null; then
+    echo "❌ Kubo (ipfs) not detected."
+    echo "Please install it first: https://dist.ipfs.tech/kubo/"
     exit 1
   else
-    echo "✓ IPFS Desktop detected"
+    echo "✓ Kubo detected: $(ipfs version)"
   fi
 
   sudo apt update
   sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release
 
-  if ! command -v ipfs &>/dev/null; then
-    echo "→ IPFS not found, installing..."
-    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
-      echo "❌ Failed to download IPFS installer." >&2
-      exit 1
-    fi
-    if ! sudo bash /tmp/ipfs-install.sh; then
-      echo "❌ IPFS install failed. Aborting." >&2
-      exit 1
-    fi
-    rm -f /tmp/ipfs-install.sh
-  else
-    echo "✓ IPFS already installed: $(ipfs version)"
-  fi
-
-  if ! command -v ipfs &>/dev/null; then
-    echo "❌ IPFS install failed. Aborting." >&2
-    exit 1
-  fi
 
   if ! command -v caddy &>/dev/null; then
     echo "→ Installing Caddy (HTTPS reverse proxy)..."
