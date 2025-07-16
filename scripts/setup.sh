@@ -31,6 +31,16 @@ echo "🌍 Detected setup version: $SETUP_VERSION"
 ### 2. PREREQUISITES
 prerequisites() {
   echo "[0/6] Installing prerequisites..."
+
+  # Ensure the IPFS Desktop application is present
+  if ! command -v ipfs-desktop &>/dev/null; then
+    echo "❌ IPFS Desktop not detected."
+    echo "Please install it first: https://github.com/ipfs/ipfs-desktop/releases/latest"
+    exit 1
+  else
+    echo "✓ IPFS Desktop detected"
+  fi
+
   sudo apt update
   sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release
 
