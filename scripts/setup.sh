@@ -67,7 +67,9 @@ prerequisites() {
 ### 3. SSD MOUNT
 setup_mount() {
   echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
-  DEV=$(lsblk -dnpo NAME,SIZE | awk -v min=$((MIN_SIZE_GB * 1024**3)) '$2+0 >= min {print $1; exit}')
+  # Use decimal gigabytes to match typical drive labels (e.g. 1TB ≈ 1000GB)
+  # lsblk -b ensures size is printed in bytes for an accurate comparison
+  DEV=$(lsblk -bdnpo NAME,SIZE | awk -v min=$((MIN_SIZE_GB * 1000**3)) '$2 >= min {print $1; exit}')
   [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
   PART="${DEV}1"
 
