@@ -120,7 +120,15 @@ EOF2
 
 map_dns() {
   echo "🔗 Creating DNS route: $SUBDOMAIN → $TUNNEL_NAME"
-  cloudflared tunnel route dns "$TUNNEL_NAME" "$SUBDOMAIN"
+  local output
+  if ! output=$(cloudflared tunnel route dns "$TUNNEL_NAME" "$SUBDOMAIN" 2>&1); then
+    if echo "$output" | grep -qi "already exists"; then
+      echo "✅ DNS route already exists, using existing one."
+    else
+      echo "$output"
+      return 1
+    fi
+  fi
 }
 
 create_systemd_service() {
