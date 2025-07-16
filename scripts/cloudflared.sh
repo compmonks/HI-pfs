@@ -68,41 +68,38 @@ install_cloudflared() {
 handle_existing_tunnel() {
   local list_output
   list_output=$(cloudflared tunnel list --output json 2>/dev/null || true)
-  if ! echo "$list_output" | grep -q "\"Name\"[[:space:]]*:[[:space:]]*\"$TUNNEL_NAME\""; then
-    return
+  if echo "$list_output" | grep -q "\"Name\"[[:space:]]*:[[:space:]]*\"$TUNNEL_NAME\""; then
+    echo "⚠️ Existing tunnel '$TUNNEL_NAME' detected. Removing to recreate..."
+    cloudflared tunnel delete "$TUNNEL_NAME" || true
+    rm -f "$CREDENTIAL_FILE"
   fi
+}
 
-  echo "⚠️ A tunnel named '$TUNNEL_NAME' already exists in Cloudflare."
-  select OPTION in "Reuse existing tunnel" "Delete and recreate" "Abort"; do
-    case $OPTION in
-      "Reuse existing tunnel")
-        echo "🔁 Reusing existing tunnel..."
-        ;;
-      "Delete and recreate")
-        echo "🧹 Deleting tunnel remotely..."
-        cloudflared tunnel delete "$TUNNEL_NAME" || true
-        rm -f "$CREDENTIAL_FILE"
-        break
-        ;;
-      "Abort")
-        echo "🚫 Aborting setup."
-        exit 1
-        ;;
-    esac
-    break
-  done
+remove_existing_cert() {
+  local cert="$HOME/.cloudflared/cert.pem"
+  if [[ -f "$cert" ]]; then
+    echo "🧹 Removing existing Cloudflare certificate at $cert"
+    rm -f "$cert"
+  fi
 }
 
 authenticate_cloudflare() {
   echo "🌐 Authenticating tunnel (opens browser)..."
+  remove_existing_cert
   cloudflared tunnel login
 }
 
 create_tunnel() {
   if [[ -f "$CREDENTIAL_FILE" ]]; then
     echo "✅ Tunnel credentials found at $CREDENTIAL_FILE"
-  else
-    echo "🚧 Creating tunnel: $TUNNEL_NAME..."
+    return
+  fi
+
+  echo "🚧 Creating tunnel: $TUNNEL_NAME..."
+  if ! cloudflared tunnel create "$TUNNEL_NAME"; then
+    echo "⚠️ Tunnel creation failed, attempting to recreate..."
+    cloudflared tunnel delete "$TUNNEL_NAME" || true
+    rm -f "$CREDENTIAL_FILE"
     cloudflared tunnel create "$TUNNEL_NAME"
   fi
 }
