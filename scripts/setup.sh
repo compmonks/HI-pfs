@@ -98,7 +98,8 @@ setup_mount() {
     PART=$(lsblk -lnpo NAME,TYPE "$DEV" | awk '$2=="part"{print $1; exit}')
     [[ -z "$PART" ]] && PART="$DEV"
 
-    FSTYPE=$(blkid -s TYPE -o value "$PART")
+    FSTYPE=$(lsblk -no FSTYPE "$PART" | head -n 1)
+    [[ -z "$FSTYPE" ]] && FSTYPE=$(blkid -s TYPE -o value "$PART" 2>/dev/null || true)
     if [[ -z "$FSTYPE" ]]; then
       echo "→ Formatting $PART as ext4..."
       sudo mkfs.ext4 -F "$PART"
