@@ -1,7 +1,7 @@
 # pylint: skip-file
 #!/bin/bash
 # HI-pfs: Self-Maintenance Script
-# Automatically updates system, IPFS, cloudflared, and token server.
+# Automatically updates system, Kubo (IPFS), cloudflared, and token server.
 # Logs actions and sends optional email alerts.
 
 set -e
@@ -21,17 +21,21 @@ echo "[$TIMESTAMP] Self-maintenance started on $HOSTNAME" >> "$LOGFILE"
 echo "→ Updating system packages..." >> "$LOGFILE"
 sudo apt update -qq && sudo apt upgrade -y >> "$LOGFILE" 2>&1
 
-# 2. IPFS upgrade
-echo "→ Checking IPFS version..." >> "$LOGFILE"
-INSTALLED=$(ipfs version | grep -o 'v[0-9.]*')
-LATEST=$(curl -s https://dist.ipfs.tech/go-ipfs/versions | grep -o 'v[0-9.]*' | head -n1)
+# 2. Kubo upgrade
+echo "→ Checking Kubo version..." >> "$LOGFILE"
+if command -v ipfs &>/dev/null; then
+  INSTALLED=$(ipfs version | grep -o 'v[0-9.]*')
+else
+  INSTALLED="none"
+fi
+LATEST=$(curl -s https://dist.ipfs.tech/kubo/versions | grep -o 'v[0-9.]*' | head -n1)
 
 if [[ "$LATEST" != "$INSTALLED" ]]; then
-  echo "→ Upgrading IPFS from $INSTALLED to $LATEST" >> "$LOGFILE"
-  curl -s https://dist.ipfs.tech/go-ipfs/install.sh | sudo bash >> "$LOGFILE" 2>&1
+  echo "→ Installing Kubo $LATEST" >> "$LOGFILE"
+  curl -s https://dist.ipfs.tech/kubo/install.sh | sudo bash >> "$LOGFILE" 2>&1
   NEED_REBOOT=1
 else
-  echo "→ IPFS is already up to date ($INSTALLED)" >> "$LOGFILE"
+  echo "→ Kubo is already up to date ($INSTALLED)" >> "$LOGFILE"
 fi
 
 # 3. cloudflared update

@@ -34,15 +34,16 @@ prerequisites() {
 
   # Ensure Kubo (ipfs CLI) is installed beforehand
   if ! command -v ipfs &>/dev/null; then
-    echo "❌ Kubo (ipfs) not detected."
-    echo "Please install it first: https://dist.ipfs.tech/kubo/"
-    exit 1
-  else
-    echo "✓ Kubo detected: $(ipfs version)"
+    echo "→ Kubo not found. Installing..."
+    if ! curl -fsSL https://dist.ipfs.tech/kubo/install.sh | sudo bash; then
+      echo "❌ Failed to install Kubo." >&2
+      exit 1
+    fi
   fi
+  echo "✓ Kubo detected: $(ipfs version)"
 
   sudo apt update
-  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release
+  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release parted exfat-fuse exfatprogs
 
 
   if ! command -v caddy &>/dev/null; then
@@ -68,22 +69,30 @@ prerequisites() {
 setup_mount() {
   echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
   # Use decimal gigabytes to match typical drive labels (e.g. 1TB ≈ 1000GB)
-  # Accept devices within 5% of the requested size to allow capacity variance
-  MIN_BYTES=$((MIN_SIZE_GB * 1000**3))
-  CHECK_BYTES=$((MIN_BYTES * 95 / 100))
-  # lsblk -b ensures size is printed in bytes for an accurate comparison
-  DEV=$(lsblk -bdnpo NAME,SIZE | awk -v min=$CHECK_BYTES '$2 >= min {print $1; exit}')
-  [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found (within 5% tolerance)" && exit 1
-  PART="${DEV}1"
+
+  MIN_BYTES=$((MIN_SIZE_GB * 1000 * 1000 * 1000))
+  THRESH=$((MIN_BYTES * 90 / 100))  # allow ~10% margin
+  DEV=$(lsblk -bdnpo NAME,SIZE,TYPE | awk -v min=$THRESH '$2 >= min && $3=="disk" {print $1; exit}')
+  [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
+
+  PART=$(lsblk -lnpo NAME,TYPE "$DEV" | awk '$2=="part"{print $1; exit}')
+  [[ -z "$PART" ]] && PART="$DEV"
+
+  FSTYPE=$(blkid -s TYPE -o value "$PART")
+  if [[ -z "$FSTYPE" ]]; then
+    echo "→ Formatting $PART as ext4..."
+    sudo mkfs.ext4 -F "$PART"
+    FSTYPE="ext4"
+  fi
 
   sudo mkdir -p "$MOUNT_POINT"
-  sudo mount "$PART" "$MOUNT_POINT" || {
+  sudo mount -t "$FSTYPE" "$PART" "$MOUNT_POINT" || {
     echo "❌ Failed to mount $PART"
     exit 1
   }
 
   UUID=$(blkid -s UUID -o value "$PART")
-  grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT ext4 defaults,nofail,x-systemd.requires=network-online.target 0 2" | sudo tee -a /etc/fstab > /dev/null
+  grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT $FSTYPE defaults,nofail,x-systemd.requires=network-online.target 0 2" | sudo tee -a /etc/fstab > /dev/null
   sudo chown -R $IPFS_USER:$IPFS_USER "$MOUNT_POINT"
   echo "✓ SSD mounted at $MOUNT_POINT"
 }
@@ -95,17 +104,17 @@ setup_ipfs_service() {
   # Check IPFS binary
   if ! command -v ipfs &>/dev/null; then
     echo "❌ IPFS command not found. Reinstalling..."
-    if ! curl -fsSL https://dist.ipfs.tech/go-ipfs/install.sh -o /tmp/ipfs-install.sh; then
-      echo "❌ Failed to download IPFS installer." >&2
+    if ! curl -fsSL https://dist.ipfs.tech/kubo/install.sh -o /tmp/ipfs-install.sh; then
+      echo "❌ Failed to download Kubo installer." >&2
       return 1
     fi
     if ! sudo bash /tmp/ipfs-install.sh; then
-      echo "❌ IPFS install failed." >&2
+      echo "❌ Kubo install failed." >&2
       return 1
     fi
     rm -f /tmp/ipfs-install.sh
     if ! command -v ipfs &>/dev/null; then
-      echo "❌ IPFS install failed." >&2
+      echo "❌ Kubo install failed." >&2
       return 1
     fi
   else
