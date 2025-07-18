@@ -82,23 +82,42 @@ setup_mount() {
   MIN_BYTES=$((MIN_SIZE_GB * 1000 * 1000 * 1000))
   THRESH=$((MIN_BYTES * 90 / 100))  # allow ~10% margin
   DEV=$(lsblk -bdnpo NAME,SIZE,TYPE | awk -v min=$THRESH '$2 >= min && $3=="disk" {print $1; exit}')
-  [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
-
-  PART=$(lsblk -lnpo NAME,TYPE "$DEV" | awk '$2=="part"{print $1; exit}')
-  [[ -z "$PART" ]] && PART="$DEV"
-
-  FSTYPE=$(blkid -s TYPE -o value "$PART")
-  if [[ -z "$FSTYPE" ]]; then
-    echo "→ Formatting $PART as ext4..."
-    sudo mkfs.ext4 -F "$PART"
-    FSTYPE="ext4"
+  if [[ -z "$DEV" ]]; then
+    echo "❌ No ≥$MIN_SIZE_GB GB device found"
+    echo "📂 Detected devices:"
+    lsblk -bdnpo NAME,SIZE,TYPE
+    read -rp "🤔 Enter device path to use for the SSD (or press Enter to abort): " DEV
+    if [[ -z "$DEV" ]]; then
+      echo "Aborting mount setup."
+      exit 1
+    fi
   fi
 
-  sudo mkdir -p "$MOUNT_POINT"
-  sudo mount -t "$FSTYPE" "$PART" "$MOUNT_POINT" || {
+  while true; do
+    PART=$(lsblk -lnpo NAME,TYPE "$DEV" | awk '$2=="part"{print $1; exit}')
+    [[ -z "$PART" ]] && PART="$DEV"
+
+    FSTYPE=$(blkid -s TYPE -o value "$PART")
+    if [[ -z "$FSTYPE" ]]; then
+      echo "→ Formatting $PART as ext4..."
+      sudo mkfs.ext4 -F "$PART"
+      FSTYPE="ext4"
+    fi
+
+    sudo mkdir -p "$MOUNT_POINT"
+    if sudo mount -t "$FSTYPE" "$PART" "$MOUNT_POINT"; then
+      break
+    fi
+
     echo "❌ Failed to mount $PART"
-    exit 1
-  }
+    echo "📂 Available devices:"
+    lsblk -bdnpo NAME,SIZE,TYPE
+    read -rp "Enter different device path to retry (or press Enter to abort): " DEV
+    if [[ -z "$DEV" ]]; then
+      echo "Aborting mount setup."
+      exit 1
+    fi
+  done
 
   UUID=$(blkid -s UUID -o value "$PART")
   grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT $FSTYPE defaults,nofail,x-systemd.requires=network-online.target 0 2" | sudo tee -a /etc/fstab > /dev/null
