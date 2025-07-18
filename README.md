@@ -73,8 +73,8 @@ account:
       - A Cloudflare account (can be created later in the process).
      - **Kubo (IPFS CLI)** installed. (CHECK FOR THE LATEST VERSION AND CHANGE THE CODE BELOW ACCORDINGLY) Download the Linux binary for your architecture from [dist.ipfs.tech](https://dist.ipfs.tech/). On a 64-bit Raspberry Pi OS this is `linux-arm64`:
        ```bash
-       wget https://dist.ipfs.tech/kubo/v0.36.0/kubo_v0.36.0_linux-arm64.tar.gz
-       tar -xvzf kubo_v0.36.0_linux-arm64.tar.gz
+       sudo wget https://dist.ipfs.tech/kubo/v0.36.0/kubo_v0.36.0_linux-arm64.tar.gz
+       sudo tar -xvzf kubo_v0.36.0_linux-arm64.tar.gz
        cd kubo
        sudo bash install.sh
        ```
