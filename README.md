@@ -191,6 +191,28 @@ This runs the unit tests found in the `tests/` directory.
 
 Continuous integration on GitHub also checks all Python files with `pylint`.
 
+## Desktop Launcher
+
+A small GUI can be used on Raspberry Pi OS to run the most common tasks.
+It fetches the latest scripts from GitHub each time, so the node can be
+managed even without cloning this repository.
+
+1. Copy `hi-pfs.desktop` to your desktop:
+
+   ```bash
+   cp hi-pfs.desktop ~/Desktop/
+   ```
+
+2. Edit the `Exec` path in the file so it matches the location of this
+   repository on your Pi.
+
+Launching the icon opens a window with three buttons that execute the
+same `curl` commands documented above:
+
+- **Install** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
+- **Diagnostics & Tests** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/diagnostics.sh)`
+- **Delete** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`
+
 ## Learn More
 
 Review each script in the `scripts/` folder to understand the setup process and
