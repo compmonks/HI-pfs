@@ -10,7 +10,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 ### 0. VERIFY INPUT ENVIRONMENT VARIABLES
-REQUIRED_VARS=(IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB)
+REQUIRED_VARS=(IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE SSD_DEVICE)
 echo "🔍 Verifying environment variables..."
 for VAR in "${REQUIRED_VARS[@]}"; do
   if [[ -z "${!VAR:-}" ]]; then
@@ -76,16 +76,12 @@ prerequisites() {
 
 ### 3. SSD MOUNT
 setup_mount() {
-  echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
-  # Use decimal gigabytes to match typical drive labels (e.g. 1TB ≈ 1000GB)
-
-  MIN_BYTES=$((MIN_SIZE_GB * 1000 * 1000 * 1000))
-  THRESH=$((MIN_BYTES * 90 / 100))  # allow ~10% margin
-  DEV=$(lsblk -bdnpo NAME,SIZE,TYPE | awk -v min=$THRESH '$2 >= min && $3=="disk" {print $1; exit}')
-  if [[ -z "$DEV" ]]; then
-    echo "❌ No ≥$MIN_SIZE_GB GB device found"
-    echo "📂 Detected devices:"
-    lsblk -bdnpo NAME,SIZE,TYPE
+  echo "💽 Mounting SSD at ${SSD_DEVICE}..."
+  DEV="$SSD_DEVICE"
+  if [[ ! -b "$DEV" ]]; then
+    echo "❌ Device $DEV not found"
+    echo "📂 Available devices:"
+    lsblk -dnpo NAME,SIZE,TYPE | awk '$3=="disk"{printf "  %s (%s)\n", $1, $2}'
     read -rp "🤔 Enter device path to use for the SSD (or press Enter to abort): " DEV
     if [[ -z "$DEV" ]]; then
       echo "Aborting mount setup."
@@ -111,7 +107,7 @@ setup_mount() {
 
     echo "❌ Failed to mount $PART"
     echo "📂 Available devices:"
-    lsblk -bdnpo NAME,SIZE,TYPE
+    lsblk -dnpo NAME,SIZE,TYPE | awk '$3=="disk"{printf "  %s (%s)\n", $1, $2}'
     read -rp "Enter different device path to retry (or press Enter to abort): " DEV
     if [[ -z "$DEV" ]]; then
       echo "Aborting mount setup."
