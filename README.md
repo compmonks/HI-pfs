@@ -71,7 +71,7 @@ account:
       - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
       - An existing web domain that you own.
       - A Cloudflare account (can be created later in the process).
-     - **Kubo (IPFS CLI)** installed. Download the Linux binary from [dist.ipfs.tech](https://dist.ipfs.tech/):
+     - **Kubo (IPFS CLI)** installed. (CHECK FOR THE LATEST VERSION AND CHANGE THE CODE BELOW ACCORDINGLY) Download the Linux binary from [dist.ipfs.tech](https://dist.ipfs.tech/):
        ```bash
        wget https://dist.ipfs.tech/kubo/v0.36.0/kubo_v0.36.0_linux-amd64.tar.gz
        tar -xvzf kubo_v0.36.0_linux-amd64.tar.gz
