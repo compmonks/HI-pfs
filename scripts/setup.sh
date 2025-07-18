@@ -68,9 +68,12 @@ prerequisites() {
 setup_mount() {
   echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
   # Use decimal gigabytes to match typical drive labels (e.g. 1TB ≈ 1000GB)
+  # Accept devices within 5% of the requested size to allow capacity variance
+  MIN_BYTES=$((MIN_SIZE_GB * 1000**3))
+  CHECK_BYTES=$((MIN_BYTES * 95 / 100))
   # lsblk -b ensures size is printed in bytes for an accurate comparison
-  DEV=$(lsblk -bdnpo NAME,SIZE | awk -v min=$((MIN_SIZE_GB * 1000**3)) '$2 >= min {print $1; exit}')
-  [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found" && exit 1
+  DEV=$(lsblk -bdnpo NAME,SIZE | awk -v min=$CHECK_BYTES '$2 >= min {print $1; exit}')
+  [[ -z "$DEV" ]] && echo "❌ No ≥$MIN_SIZE_GB GB device found (within 5% tolerance)" && exit 1
   PART="${DEV}1"
 
   sudo mkdir -p "$MOUNT_POINT"
