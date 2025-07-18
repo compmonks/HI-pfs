@@ -53,20 +53,25 @@ prerequisites() {
 
   sudo apt update
   sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release parted exfat-fuse exfatprogs
+  # Remove any packages that are no longer required after installation
+  sudo apt autoremove -y
 
 
   if ! command -v caddy &>/dev/null; then
     echo "→ Installing Caddy (HTTPS reverse proxy)..."
     sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+    sudo apt autoremove -y
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
     sudo apt update
     sudo apt install -y caddy
+    sudo apt autoremove -y
   fi
 
   if ! command -v chromium-browser &>/dev/null; then
     echo "→ Installing Chromium for desktop WebUI..."
     sudo apt install -y chromium-browser
+    sudo apt autoremove -y
   fi
 
   # Handle Debian's PEP 668 "externally-managed" environment
