@@ -103,8 +103,9 @@ while true; do
 done
 read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
 read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
-read -p "Enter minimum SSD size in GB (default: 1000): " MIN_SIZE_GB
-MIN_SIZE_GB="${MIN_SIZE_GB:-1000}"
+echo "Available storage devices:" 
+lsblk -dnpo NAME,SIZE,TYPE | awk '$3=="disk"{printf "  %s (%s)\n", $1, $2}'
+read -p "Enter the device path for your SSD (e.g. /dev/sda): " SSD_DEVICE
 
 # Generate node hostname and tunnel name automatically
 generate_names() {
@@ -142,11 +143,11 @@ NODE_NAME=$NODE_NAME
 TUNNEL_SUBDOMAIN=$TUNNEL_SUBDOMAIN
 CLOUDFLARE_DOMAIN=$CLOUDFLARE_DOMAIN
 IS_PRIMARY_NODE=$IS_PRIMARY_NODE
-MIN_SIZE_GB=$MIN_SIZE_GB
+SSD_DEVICE=$SSD_DEVICE
 EOF
 
 # Make available in current shell
-export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE MIN_SIZE_GB
+export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_NODE SSD_DEVICE
 
 #-------------#
 # 3. HOSTNAME SETUP
@@ -162,7 +163,7 @@ echo "  → User:         $IPFS_USER"
 echo "  → Hostname:     $NODE_NAME"
 echo "  → Domain:       $TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
 echo "  → Primary Node: $IS_PRIMARY_NODE"
-echo "  → SSD Min Size: ${MIN_SIZE_GB}GB"
+echo "  → SSD Device:   $SSD_DEVICE"
 
 #-------------#
 # 5. SCRIPT DOWNLOADS

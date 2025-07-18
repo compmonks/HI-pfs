@@ -120,7 +120,7 @@ These steps may vary depending on your domain provider:
 bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
 ```
 
-- Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD size.
+- Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD device.
 - For additional nodes, provide the previous node hostname or IP when prompted.
 - Once you are done with setting up the first node, don't forget to copy the `swarm.key` and `PEERS.txt` files to other nodes before setup in order to liknk them properly. Follow instructions during the first setup.
 
