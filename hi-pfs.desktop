@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=HI-pfs Launcher
-Exec=python3 /home/pi/HI-pfs/scripts/gui_launcher.py
+Exec=bash -c "curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/gui_launcher.py | python3 -"
 Icon=utilities-terminal
 Terminal=false
 Categories=Utility;

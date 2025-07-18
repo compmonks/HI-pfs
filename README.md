@@ -197,14 +197,15 @@ A small GUI can be used on Raspberry Pi OS to run the most common tasks.
 It fetches the latest scripts from GitHub each time, so the node can be
 managed even without cloning this repository.
 
-1. Copy `hi-pfs.desktop` to your desktop:
+1. Copy `hi-pfs.desktop` to your desktop and make it executable:
 
    ```bash
    cp hi-pfs.desktop ~/Desktop/
+   chmod +x ~/Desktop/hi-pfs.desktop
    ```
 
-2. Edit the `Exec` path in the file so it matches the location of this
-   repository on your Pi.
+   The launcher fetches `gui_launcher.py` directly from GitHub each time it
+   runs, so it works even if you haven't cloned this repository.
 
 Launching the icon opens a window with three buttons that execute the
 same `curl` commands documented above:
