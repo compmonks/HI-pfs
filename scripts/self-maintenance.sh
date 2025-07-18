@@ -32,7 +32,11 @@ LATEST=$(curl -s https://dist.ipfs.tech/kubo/versions | grep -o 'v[0-9.]*' | hea
 
 if [[ "$LATEST" != "$INSTALLED" ]]; then
   echo "→ Installing Kubo $LATEST" >> "$LOGFILE"
-  curl -s https://dist.ipfs.tech/kubo/install.sh | sudo bash >> "$LOGFILE" 2>&1
+  KUBO_URL="https://dist.ipfs.tech/kubo/${LATEST}/kubo_${LATEST}_linux-arm64.tar.gz"
+  curl -L "$KUBO_URL" -o /tmp/kubo.tar.gz >> "$LOGFILE" 2>&1
+  tar -xzf /tmp/kubo.tar.gz -C /tmp >> "$LOGFILE" 2>&1
+  sudo bash /tmp/kubo/install.sh >> "$LOGFILE" 2>&1
+  rm -rf /tmp/kubo /tmp/kubo.tar.gz
   NEED_REBOOT=1
 else
   echo "→ Kubo is already up to date ($INSTALLED)" >> "$LOGFILE"

@@ -35,10 +35,19 @@ prerequisites() {
   # Ensure Kubo (ipfs CLI) is installed beforehand
   if ! command -v ipfs &>/dev/null; then
     echo "→ Kubo not found. Installing..."
-    if ! curl -fsSL https://dist.ipfs.tech/kubo/install.sh | sudo bash; then
-      echo "❌ Failed to install Kubo." >&2
+    KUBO_VERSION="v0.36.0"
+    KUBO_URL="https://dist.ipfs.tech/kubo/${KUBO_VERSION}/kubo_${KUBO_VERSION}_linux-arm64.tar.gz"
+    echo "ℹ️ Using Kubo ${KUBO_VERSION}. Check https://dist.ipfs.tech/kubo/ for newer releases."
+    curl -L "$KUBO_URL" -o /tmp/kubo.tar.gz || {
+      echo "❌ Failed to download Kubo." >&2
       exit 1
-    fi
+    }
+    tar -xzf /tmp/kubo.tar.gz -C /tmp
+    sudo bash /tmp/kubo/install.sh || {
+      echo "❌ Kubo install failed." >&2
+      exit 1
+    }
+    rm -rf /tmp/kubo /tmp/kubo.tar.gz
   fi
   echo "✓ Kubo detected: $(ipfs version)"
 
@@ -104,15 +113,19 @@ setup_ipfs_service() {
   # Check IPFS binary
   if ! command -v ipfs &>/dev/null; then
     echo "❌ IPFS command not found. Reinstalling..."
-    if ! curl -fsSL https://dist.ipfs.tech/kubo/install.sh -o /tmp/ipfs-install.sh; then
-      echo "❌ Failed to download Kubo installer." >&2
+    KUBO_VERSION="v0.36.0"
+    KUBO_URL="https://dist.ipfs.tech/kubo/${KUBO_VERSION}/kubo_${KUBO_VERSION}_linux-arm64.tar.gz"
+    echo "ℹ️ Using Kubo ${KUBO_VERSION}. Check https://dist.ipfs.tech/kubo/ for newer releases."
+    curl -L "$KUBO_URL" -o /tmp/kubo.tar.gz || {
+      echo "❌ Failed to download Kubo." >&2
       return 1
-    fi
-    if ! sudo bash /tmp/ipfs-install.sh; then
+    }
+    tar -xzf /tmp/kubo.tar.gz -C /tmp
+    if ! sudo bash /tmp/kubo/install.sh; then
       echo "❌ Kubo install failed." >&2
       return 1
     fi
-    rm -f /tmp/ipfs-install.sh
+    rm -rf /tmp/kubo /tmp/kubo.tar.gz
     if ! command -v ipfs &>/dev/null; then
       echo "❌ Kubo install failed." >&2
       return 1

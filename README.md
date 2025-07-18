@@ -71,7 +71,7 @@ account:
       - **Raspberry Pi OS 64 Lite or Desktop (easier)**. You can use Rapberry Pi Imager for that. There is a copy of the tested version you can use to replicate if you want.
       - An existing web domain that you own.
       - A Cloudflare account (can be created later in the process).
-     - **Kubo (IPFS CLI)**. The setup will automatically download and install the latest release from [dist.ipfs.tech](https://dist.ipfs.tech/) if the `ipfs` command is missing. `self-maintenance.sh` also keeps Kubo up to date.
+     - **Kubo (IPFS CLI)** version **0.36.0** is currently used. The setup downloads this release from [dist.ipfs.tech](https://dist.ipfs.tech/kubo/v0.36.0/kubo_v0.36.0_linux-arm64.tar.gz). Check [dist.ipfs.tech](https://dist.ipfs.tech/) for newer versions and either update this URL and send a pull request or run `self-maintenance.sh` after installation to upgrade.
    - A stable internet connection, **LAN** or **WAN**
 
 ### 1. Flash and Boot Raspberry Pi
