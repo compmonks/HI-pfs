@@ -69,6 +69,7 @@ prerequisites() {
 setup_mount() {
   echo "💽 Mounting SSD (min ${MIN_SIZE_GB}GB)..."
   # Use decimal gigabytes to match typical drive labels (e.g. 1TB ≈ 1000GB)
+
   MIN_BYTES=$((MIN_SIZE_GB * 1000 * 1000 * 1000))
   THRESH=$((MIN_BYTES * 90 / 100))  # allow ~10% margin
   DEV=$(lsblk -bdnpo NAME,SIZE,TYPE | awk -v min=$THRESH '$2 >= min && $3=="disk" {print $1; exit}')
