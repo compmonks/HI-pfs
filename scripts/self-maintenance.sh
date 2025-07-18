@@ -20,6 +20,7 @@ echo "[$TIMESTAMP] Self-maintenance started on $HOSTNAME" >> "$LOGFILE"
 # 1. System update
 echo "→ Updating system packages..." >> "$LOGFILE"
 sudo apt update -qq && sudo apt upgrade -y >> "$LOGFILE" 2>&1
+sudo apt autoremove -y >> "$LOGFILE" 2>&1
 
 # 2. Kubo upgrade
 echo "→ Checking Kubo version..." >> "$LOGFILE"
@@ -60,6 +61,7 @@ NEED_REBOOT=1
 # 4. Caddy upgrade
 echo "→ Updating Caddy..." >> "$LOGFILE"
 sudo apt install --only-upgrade -y caddy >> "$LOGFILE" 2>&1
+sudo apt autoremove -y >> "$LOGFILE" 2>&1
 
 # 5. Refresh token-server script
 SERVER_PY="/home/$USER/token-server/server.py"
