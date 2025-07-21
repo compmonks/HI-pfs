@@ -6,6 +6,13 @@
 
 set -euo pipefail
 
+# Ensure we run interactively so prompts work
+if [[ ! -t 0 ]]; then
+  echo "This script must be run in an interactive shell."
+  echo "Use: sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)"
+  exit 1
+fi
+
 #-------------#
 # CONFIG
 #-------------#
