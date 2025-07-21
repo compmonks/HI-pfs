@@ -119,9 +119,11 @@ These steps may vary depending on your domain provider:
 Run the script with sudo so it can create system services and token watcher:
 ```bash
 
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
 
 ```
+If your shell reports `bash: /dev/fd/*: No such file or directory` when using the
+`<(curl ...)` form, the piped command above avoids that issue.
 
 - Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD device.
 - For additional nodes, provide the previous node hostname or IP when prompted.
@@ -150,16 +152,17 @@ All installer commands should be run with sudo or as root.
 2. (Optional) clean an existing install:
    ```bash
 
-   sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)
+   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | sudo bash
 
    ```
 3. Configure a Cloudflare tunnel and DNS for each node.
 4. Bootstrap a node:
    ```bash
 
-   sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
+   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
 
    ```
+   This piped form works even on shells that lack `/dev/fd` support.
    Follow the prompts for user, node name and tunnel information. Copy the
    `swarm.key` and `PEERS.txt` to other nodes before running the same command on
    them.
@@ -218,9 +221,9 @@ managed even without cloning this repository.
 Launching the icon opens a window with three buttons that execute the
 same `curl` commands documented above:
 
-- **Install** – `sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
-- **Diagnostics & Tests** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/diagnostics.sh)`
-- **Delete** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`
+- **Install** – `curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash`
+- **Diagnostics & Tests** – `curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/diagnostics.sh | bash`
+- **Delete** – `curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | bash`
 
 ## Learn More
 
