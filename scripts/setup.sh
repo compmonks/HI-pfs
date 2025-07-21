@@ -52,7 +52,7 @@ prerequisites() {
   echo "✓ Kubo detected: $(ipfs version)"
 
   sudo apt update
-  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release parted exfat-fuse exfatprogs
+  sudo apt install -y curl unzip python3 python3-pip zip cron mailutils inotify-tools lsb-release parted exfat-fuse exfatprogs ntfs-3g
   # Remove any packages that are no longer required after installation
   sudo apt autoremove -y
 
@@ -101,9 +101,20 @@ setup_mount() {
     FSTYPE=$(lsblk -no FSTYPE "$PART" | head -n 1)
     [[ -z "$FSTYPE" ]] && FSTYPE=$(blkid -s TYPE -o value "$PART" 2>/dev/null || true)
     if [[ -z "$FSTYPE" ]]; then
-      echo "→ Formatting $PART as ext4..."
-      sudo mkfs.ext4 -F "$PART"
-      FSTYPE="ext4"
+      echo "→ Formatting $PART as ntfs..."
+      sudo mkfs.ntfs -F "$PART"
+      FSTYPE="ntfs"
+    else
+      case "$FSTYPE" in
+        ntfs|ext4|exfat)
+          echo "✓ Detected filesystem: $FSTYPE"
+          ;;
+        *)
+          echo "⚠️ Unsupported filesystem $FSTYPE. Reformatting as ntfs..."
+          sudo mkfs.ntfs -F "$PART"
+          FSTYPE="ntfs"
+          ;;
+      esac
     fi
 
     sudo mkdir -p "$MOUNT_POINT"
