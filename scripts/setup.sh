@@ -336,7 +336,9 @@ setup_caddy() {
   FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
   sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
 $FULL_DOMAIN {
+
 $AUTH_BLOCK  reverse_proxy 127.0.0.1:5001
+
 }
 $GATEWAY_BLOCK
 EOF
