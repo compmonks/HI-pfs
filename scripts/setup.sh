@@ -249,7 +249,7 @@ setup_auto_token_generator() {
 
   mkdir -p "/home/$IPFS_USER/scripts" "/home/$IPFS_USER/ipfs-admin/uploads" "$(dirname $LOG_FILE)"
 
-  cat <<EOSH | sudo tee "$WATCH_SCRIPT" > /dev/null
+  cat <<EOSH | tee "$WATCH_SCRIPT" > /dev/null
 #!/bin/bash
 WATCH_DIR="/home/$IPFS_USER/ipfs-admin/uploads"
 LOG_FILE="$LOG_FILE"
