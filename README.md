@@ -119,7 +119,7 @@ These steps may vary depending on your domain provider:
 Run the script with sudo so it can create system services and token watcher:
 ```bash
 
-curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
 
 ```
 
@@ -150,14 +150,14 @@ All installer commands should be run with sudo or as root.
 2. (Optional) clean an existing install:
    ```bash
 
-   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | sudo bash
+   sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)
 
    ```
 3. Configure a Cloudflare tunnel and DNS for each node.
 4. Bootstrap a node:
    ```bash
 
-   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
+   sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
 
    ```
    Follow the prompts for user, node name and tunnel information. Copy the
@@ -218,7 +218,7 @@ managed even without cloning this repository.
 Launching the icon opens a window with three buttons that execute the
 same `curl` commands documented above:
 
-- **Install** – `curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash`
+- **Install** – `sudo bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
 - **Diagnostics & Tests** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/diagnostics.sh)`
 - **Delete** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`
 
