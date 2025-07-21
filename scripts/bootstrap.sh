@@ -8,6 +8,7 @@ set -euo pipefail
 
 # Ensure we run interactively so prompts work
 if [[ ! -t 0 ]]; then
+
   # When piped into bash, stdin isn't a TTY. Attempt to reattach both stdin
   # and stdout to /dev/tty so that prompts work correctly. If no terminal is
   # available, abort with instructions for running interactively.
@@ -16,6 +17,7 @@ if [[ ! -t 0 ]]; then
   else
     echo "This script must be run in an interactive shell." >&2
     echo "Use: curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash" >&2
+
     exit 1
   fi
 fi
