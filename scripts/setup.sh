@@ -323,26 +323,31 @@ setup_caddy() {
   echo "→ Support multiple upstream nodes for load balancing? (e.g. ipfs1.local, ipfs2.local)"
   read -p "Comma-separated upstream IPFS API hosts or leave blank: " GATEWAY_BACKENDS
 
-  BACKENDS=""
-  IFS=',' read -ra NODES <<< "$GATEWAY_BACKENDS"
-  for NODE in "${NODES[@]}"; do
-    BACKENDS+="\n  reverse_proxy $NODE:5001"
-  done
+  GATEWAY_BLOCK=""
+  if [[ -n "$GATEWAY_BACKENDS" ]]; then
+    BACKENDS=""
+    IFS=',' read -ra NODES <<< "$GATEWAY_BACKENDS"
+    for NODE in "${NODES[@]}"; do
+      BACKENDS+="\n  reverse_proxy $NODE:5001"
+    done
+    GATEWAY_BLOCK="\n/gateway {${BACKENDS}\n}"
+  fi
 
   FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
   sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
 $FULL_DOMAIN {
   reverse_proxy 127.0.0.1:5001$AUTH_BLOCK
 }
-
-/gateway {
-  $BACKENDS
-}
+$GATEWAY_BLOCK
 EOF
 
   sudo systemctl enable caddy
   sudo systemctl restart caddy
-  echo "✓ Caddy configured with Web UI at $FULL_DOMAIN and gateway /gateway endpoint."
+  if [[ -n "$GATEWAY_BACKENDS" ]]; then
+    echo "✓ Caddy configured with Web UI at $FULL_DOMAIN and gateway /gateway endpoint."
+  else
+    echo "✓ Caddy configured with Web UI at $FULL_DOMAIN"
+  fi
 }
 
 ### 7. TOKEN SERVER
