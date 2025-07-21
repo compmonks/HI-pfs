@@ -184,7 +184,14 @@ setup_ipfs_service() {
   echo "🔧 Applying IPFS configurations..."
   sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
   sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-  sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config --json Identity.NodeName "\"$NODE_NAME\""
+
+  # Older IPFS versions (e.g., 0.36) do not support Identity.NodeName
+  if sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config Identity.NodeName >/dev/null 2>&1; then
+    sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config --json Identity.NodeName "\"$NODE_NAME\""
+  else
+    echo "⚠️  Identity.NodeName unsupported in this IPFS version, skipping"
+  fi
+
   sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config --json Addresses.Announce "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
 
   echo "📝 Creating IPFS systemd service..."
