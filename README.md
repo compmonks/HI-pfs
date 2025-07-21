@@ -116,8 +116,9 @@ These steps may vary depending on your domain provider:
 **WARNING : YOUR WEBSITE FRONTEND OR OTHER MIGHT FAIL BECAUSE OF CLOUDFLARE PROXY**. If that's the case, you will need to troubleshoot this as it depends of your setup.
  
 ### 4. Bootstrap the node
+Run the script with sudo so it can create system services and token watcher:
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
+curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
 ```
 
 - Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD device.
@@ -143,14 +144,15 @@ When the old primary rejoins it demotes automatically.
 ## Quick Start
 
 1. Flash Raspberry Pi OS (64‑bit recommended) and boot the Pi.
+All installer commands should be run with sudo or as root.
 2. (Optional) clean an existing install:
    ```bash
-   bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)
+   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | sudo bash
    ```
 3. Configure a Cloudflare tunnel and DNS for each node.
 4. Bootstrap a node:
    ```bash
-   bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)
+   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
    ```
    Follow the prompts for user, node name and tunnel information. Copy the
    `swarm.key` and `PEERS.txt` to other nodes before running the same command on
@@ -210,7 +212,7 @@ managed even without cloning this repository.
 Launching the icon opens a window with three buttons that execute the
 same `curl` commands documented above:
 
-- **Install** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh)`
+- **Install** – `curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash`
 - **Diagnostics & Tests** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/diagnostics.sh)`
 - **Delete** – `bash <(curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh)`
 
