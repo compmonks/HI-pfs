@@ -182,10 +182,10 @@ setup_ipfs_service() {
   fi
 
   echo "🔧 Applying IPFS configurations..."
-  sudo -u $IPFS_USER ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
-  sudo -u $IPFS_USER ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-  sudo -u $IPFS_USER ipfs config --json Identity.NodeName "\"$NODE_NAME\""
-  sudo -u $IPFS_USER ipfs config --json Addresses.Announce "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
+  sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
+  sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+  sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config --json Identity.NodeName "\"$NODE_NAME\""
+  sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs config --json Addresses.Announce "[\"/dns4/${TUNNEL_SUBDOMAIN}.${CLOUDFLARE_DOMAIN}/tcp/443/https\"]"
 
   echo "📝 Creating IPFS systemd service..."
   sudo tee /etc/systemd/system/ipfs.service > /dev/null <<EOF
