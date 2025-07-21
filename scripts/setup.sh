@@ -315,7 +315,7 @@ setup_caddy() {
   if [[ "$ENABLE_AUTH" == "y" ]]; then
     read -s -p "Enter password for $IPFS_USER: " ADMIN_PASS && echo
     HASHED_PASS=$(caddy hash-password --plaintext "$ADMIN_PASS")
-    AUTH_BLOCK="\n  basicauth {\n    $IPFS_USER $HASHED_PASS\n  }"
+    AUTH_BLOCK="  basicauth {\n    $IPFS_USER $HASHED_PASS\n  }\n"
   else
     AUTH_BLOCK=""
   fi
@@ -336,7 +336,9 @@ setup_caddy() {
   FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
   sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
 $FULL_DOMAIN {
-  reverse_proxy 127.0.0.1:5001$AUTH_BLOCK
+
+$AUTH_BLOCK  reverse_proxy 127.0.0.1:5001
+
 }
 $GATEWAY_BLOCK
 EOF
