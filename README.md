@@ -118,7 +118,9 @@ These steps may vary depending on your domain provider:
 ### 4. Bootstrap the node
 Run the script with sudo so it can create system services and token watcher:
 ```bash
+
 curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
+
 ```
 
 - Respond to prompts: user (same as Pi admin), Cloudflare domain and SSD device.
@@ -147,12 +149,16 @@ When the old primary rejoins it demotes automatically.
 All installer commands should be run with sudo or as root.
 2. (Optional) clean an existing install:
    ```bash
+
    curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/init.sh | sudo bash
+
    ```
 3. Configure a Cloudflare tunnel and DNS for each node.
 4. Bootstrap a node:
    ```bash
+
    curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash
+
    ```
    Follow the prompts for user, node name and tunnel information. Copy the
    `swarm.key` and `PEERS.txt` to other nodes before running the same command on
