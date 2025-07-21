@@ -8,10 +8,8 @@ from tkinter import messagebox
 TERMINAL = os.environ.get("TERMINAL", "x-terminal-emulator")
 
 INSTALL_CMD = (
-
-    "curl -fsSL "
-    "https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh | sudo bash"
-
+    "curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh -o /tmp/bootstrap.sh"
+    " && sudo bash /tmp/bootstrap.sh"
 )
 DIAG_CMD = (
     "bash <(curl -fsSL "
