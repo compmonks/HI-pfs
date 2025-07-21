@@ -135,6 +135,8 @@ setup_mount() {
   UUID=$(blkid -s UUID -o value "$PART")
   grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $MOUNT_POINT $FSTYPE defaults,nofail,x-systemd.requires=network-online.target 0 2" | sudo tee -a /etc/fstab > /dev/null
   sudo chown -R $IPFS_USER:$IPFS_USER "$MOUNT_POINT"
+  mkdir -p "$IPFS_PATH"
+  sudo chown -R $IPFS_USER:$IPFS_USER "$IPFS_PATH"
   echo "✓ SSD mounted at $MOUNT_POINT"
 }
 
@@ -167,9 +169,9 @@ setup_ipfs_service() {
   fi
 
   # Ensure .ipfs config exists
-  if [[ ! -f "/home/$IPFS_USER/.ipfs/config" ]]; then
+  if [[ ! -f "$IPFS_PATH/config" ]]; then
     echo "⚙️ Initializing IPFS config for $IPFS_USER..."
-    sudo -u $IPFS_USER ipfs init --profile=server
+    sudo -u $IPFS_USER IPFS_PATH="$IPFS_PATH" ipfs init --profile=server
   fi
 
   # Double-check that mount exists
@@ -195,6 +197,7 @@ Requires=mnt-ipfs.mount
 [Service]
 User=$IPFS_USER
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="IPFS_PATH=$IPFS_PATH"
 ExecStart=/usr/local/bin/ipfs daemon --enable-gc
 Restart=on-failure
 LimitNOFILE=10240
