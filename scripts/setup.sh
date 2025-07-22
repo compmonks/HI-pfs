@@ -396,18 +396,56 @@ EOF
 deploy_cid_sync() {
   if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
     echo "[6/6] Enabling autosync on primary node..."
+    local SCRIPT_FILE="/home/$IPFS_USER/scripts/cid-autosync.sh"
     local SERVICE_FILE="/etc/systemd/system/cid-autosync.service"
     local TIMER_FILE="/etc/systemd/system/cid-autosync.timer"
 
-    if [[ ! -f "$SERVICE_FILE" || ! -f "$TIMER_FILE" ]]; then
-      echo "→ CID autosync unit files missing. Installing..."
-      curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cid-autosync.service -o /tmp/cid-autosync.service
-      curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cid-autosync.timer -o /tmp/cid-autosync.timer
-      sudo mv /tmp/cid-autosync.service "$SERVICE_FILE"
-      sudo mv /tmp/cid-autosync.timer "$TIMER_FILE"
-      sudo systemctl daemon-reload
+    if [[ ! -f "$SCRIPT_FILE" ]]; then
+      cat <<'EOSH' | sudo tee "$SCRIPT_FILE" > /dev/null
+#!/bin/bash
+USER="${IPFS_USER:-$(whoami)}"
+CID_FILE="/home/$USER/ipfs-admin/shared-cids.txt"
+LOG_FILE="/home/$USER/ipfs-admin/logs/cid-sync.log"
+
+mkdir -p "$(dirname "$CID_FILE")" "$(dirname "$LOG_FILE")"
+ipfs pin ls --type=recursive -q > "$CID_FILE"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+echo "[$TIMESTAMP] CID list synced" >> "$LOG_FILE"
+EOSH
+      sudo chmod +x "$SCRIPT_FILE"
+      sudo chown $IPFS_USER:$IPFS_USER "$SCRIPT_FILE"
     fi
 
+    sudo tee "$SERVICE_FILE" > /dev/null <<EOF
+[Unit]
+Description=HI-pfs CID Autosync
+After=network-online.target ipfs.service
+Requires=ipfs.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/hi-pfs.env
+ExecStart=$SCRIPT_FILE
+User=$IPFS_USER
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo tee "$TIMER_FILE" > /dev/null <<EOF
+[Unit]
+Description=Run CID autosync hourly
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    sudo systemctl daemon-reload
     sudo systemctl enable cid-autosync.timer
     sudo systemctl start cid-autosync.timer
   else
