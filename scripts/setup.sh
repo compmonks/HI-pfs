@@ -328,20 +328,21 @@ setup_caddy() {
     BACKENDS=""
     IFS=',' read -ra NODES <<< "$GATEWAY_BACKENDS"
     for NODE in "${NODES[@]}"; do
-      BACKENDS+="\n  reverse_proxy $NODE:5001"
+      BACKENDS+="  reverse_proxy $NODE:5001\n"
     done
-    GATEWAY_BLOCK="\n/gateway {${BACKENDS}\n}"
+    GATEWAY_BLOCK="/gateway {\n${BACKENDS}}\n"
   fi
 
   FULL_DOMAIN="$TUNNEL_SUBDOMAIN.$CLOUDFLARE_DOMAIN"
-  sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
-$FULL_DOMAIN {
-
-$AUTH_BLOCK  reverse_proxy 127.0.0.1:5001
-
-}
-$GATEWAY_BLOCK
-EOF
+  CADDY_CONFIG="$FULL_DOMAIN {\n\n"
+  if [[ -n "$AUTH_BLOCK" ]]; then
+    CADDY_CONFIG+="$AUTH_BLOCK"
+  fi
+  CADDY_CONFIG+="  reverse_proxy 127.0.0.1:5001\n\n}\n"
+  if [[ -n "$GATEWAY_BLOCK" ]]; then
+    CADDY_CONFIG+="\n$GATEWAY_BLOCK"
+  fi
+  printf "%b" "$CADDY_CONFIG" | sudo tee /etc/caddy/Caddyfile > /dev/null
 
   sudo systemctl enable caddy
   sudo systemctl restart caddy
