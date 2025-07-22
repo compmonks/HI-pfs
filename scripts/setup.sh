@@ -396,6 +396,18 @@ EOF
 deploy_cid_sync() {
   if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
     echo "[6/6] Enabling autosync on primary node..."
+    local SERVICE_FILE="/etc/systemd/system/cid-autosync.service"
+    local TIMER_FILE="/etc/systemd/system/cid-autosync.timer"
+
+    if [[ ! -f "$SERVICE_FILE" || ! -f "$TIMER_FILE" ]]; then
+      echo "→ CID autosync unit files missing. Installing..."
+      curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cid-autosync.service -o /tmp/cid-autosync.service
+      curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/cid-autosync.timer -o /tmp/cid-autosync.timer
+      sudo mv /tmp/cid-autosync.service "$SERVICE_FILE"
+      sudo mv /tmp/cid-autosync.timer "$TIMER_FILE"
+      sudo systemctl daemon-reload
+    fi
+
     sudo systemctl enable cid-autosync.timer
     sudo systemctl start cid-autosync.timer
   else
