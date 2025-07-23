@@ -103,7 +103,7 @@ def download():
 
     # Regenerate token and send email
     EMAIL = get_email()
-    subprocess.Popen(["python3", os.path.join(BASE_DIR, "regenerate_token.py"), filename, EMAIL])
+    subprocess.Popen(["python3", os.path.join(BASE_DIR, "generate_token.py"), "--regenerate", filename, EMAIL])
 
     return send_file(zip_path, as_attachment=True)
 
