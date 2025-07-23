@@ -190,6 +190,7 @@ echo "  → SSD Device:   $SSD_DEVICE"
 #-------------#
 SCRIPTS=(
   cloudflared.sh
+  token-server.sh
   setup.sh
   self-maintenance.sh
   watchdog.sh
@@ -200,6 +201,7 @@ SCRIPTS=(
   demote.sh
 )
 
+SCRIPTS_DIR="/home/$IPFS_USER/scripts"
 mkdir -p "$SCRIPTS_DIR"
 for script in "${SCRIPTS[@]}"; do
   log "⬇️ Downloading $script..."
@@ -213,10 +215,13 @@ done
 # 6. RUN CLOUDFLARED & SETUP.SH
 #-------------#
 log "⚙️ Running cloudflared.sh setup..."
-bash "$SCRIPTS_DIR/cloudflared.sh"
+sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/cloudflared.sh"
 
 log "🧠 Starting main setup.sh for IPFS and services..."
-bash "$SCRIPTS_DIR/setup.sh"
+sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/setup.sh"
+
+log "📡 Installing token-server service..."
+sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/token-server.sh"
 
 #-------------#
 # 7. CREATE SYSTEMD TIMERS
