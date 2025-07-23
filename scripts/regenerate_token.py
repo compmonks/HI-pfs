@@ -44,7 +44,7 @@ def main():
     zip_path = os.path.join(ZIPS_DIR, zip_filename)
 
     if not os.path.isfile(zip_path):
-        print(f" ZIP not found: {zip_path}")
+        print(f"❌ ZIP not found: {zip_path}")
         sys.exit(1)
 
     try:
@@ -65,7 +65,6 @@ Link: {url}"""
         print(f" New token generated: {token}")
     except Exception as e:
         report_exception(logger, 'regenerate_token', e)
-
 
 if __name__ == '__main__':
     main()
