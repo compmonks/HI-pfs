@@ -227,13 +227,13 @@ done
 # 6. RUN CLOUDFLARED & SETUP.SH
 #-------------#
 log "⚙️ Running cloudflared.sh setup..."
-sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/cloudflared.sh"
+sudo -H -u "$IPFS_USER" bash "$SCRIPTS_DIR/cloudflared.sh"
 
 log "🧠 Starting main setup.sh for IPFS and services..."
-sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/setup.sh"
+sudo -H -u "$IPFS_USER" bash "$SCRIPTS_DIR/setup.sh"
 
 log "📡 Installing token-server service..."
-sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/token-server.sh"
+sudo -H -u "$IPFS_USER" bash "$SCRIPTS_DIR/token-server.sh"
 
 #-------------#
 # 7. CREATE SYSTEMD TIMERS
