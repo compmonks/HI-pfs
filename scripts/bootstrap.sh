@@ -6,6 +6,12 @@
 
 set -euo pipefail
 
+# Ensure script is run as root
+if [[ $EUID -ne 0 ]]; then
+  echo "❌ This script must be run as root (use sudo)." >&2
+  exit 1
+fi
+
 # Ensure we run interactively so prompts work
 if [[ ! -t 0 ]]; then
 
@@ -109,6 +115,12 @@ fi
 read -p "Enter your Pi admin username (default: compmonks): " IPFS_USER
 IPFS_USER="${IPFS_USER:-compmonks}"
 
+# Ensure provided user exists
+if ! id "$IPFS_USER" &>/dev/null; then
+  echo "❌ System user '$IPFS_USER' does not exist. Please create this user or use an existing account." >&2
+  exit 1
+fi
+
 while true; do
   read -p "Enter your email for node alerts and sync reports: " EMAIL
   if [[ "$EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
@@ -190,7 +202,6 @@ echo "  → SSD Device:   $SSD_DEVICE"
 #-------------#
 SCRIPTS=(
   cloudflared.sh
-  token-server.sh
   setup.sh
   self-maintenance.sh
   watchdog.sh
@@ -199,6 +210,7 @@ SCRIPTS=(
   role-check.sh
   promote.sh
   demote.sh
+  token-server.sh
 )
 
 SCRIPTS_DIR="/home/$IPFS_USER/scripts"
@@ -215,13 +227,13 @@ done
 # 6. RUN CLOUDFLARED & SETUP.SH
 #-------------#
 log "⚙️ Running cloudflared.sh setup..."
-sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/cloudflared.sh"
+sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/cloudflared.sh"
 
 log "🧠 Starting main setup.sh for IPFS and services..."
-sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/setup.sh"
+sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/setup.sh"
 
 log "📡 Installing token-server service..."
-sudo -u "$IPFS_USER" bash "$SCRIPTS_DIR/token-server.sh"
+sudo -E -u "$IPFS_USER" bash "$SCRIPTS_DIR/token-server.sh"
 
 #-------------#
 # 7. CREATE SYSTEMD TIMERS
