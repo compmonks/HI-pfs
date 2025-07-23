@@ -56,7 +56,6 @@ prerequisites() {
   # Remove any packages that are no longer required after installation
   sudo apt autoremove -y
 
-
   if ! command -v caddy &>/dev/null; then
     echo "→ Installing Caddy (HTTPS reverse proxy)..."
     sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
@@ -77,7 +76,6 @@ prerequisites() {
   # Handle Debian's PEP 668 "externally-managed" environment
   pip3 install --break-system-packages flask flask-mail requests
 }
-
 
 ### 3. SSD MOUNT
 setup_mount() {
@@ -230,7 +228,7 @@ EOF
 ### 5. AUTO TOKEN WATCHER
 setup_auto_token_generator() {
   echo "[6/6] Setting up automatic token generation watcher..."
-  
+
   mkdir -p /home/$IPFS_USER/token-server
   cd /home/$IPFS_USER/token-server
 
@@ -256,15 +254,15 @@ LOG_FILE="$LOG_FILE"
 GEN_SCRIPT="/home/$IPFS_USER/token-server/generate_token.py"
 EMAIL="$EMAIL"
 
-inotifywait -m -r -e create --format '%w%f' "\$WATCH_DIR" | while read newfile; do
-  if [[ -d "\$newfile" ]]; then
-    TIMESTAMP=\$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[\$TIMESTAMP] New folder detected: \$newfile" >> "\$LOG_FILE"
+inotifywait -m -r -e create --format '%w%f' "$WATCH_DIR" | while read newfile; do
+  if [[ -d "$newfile" ]]; then
+    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$TIMESTAMP] New folder detected: $newfile" >> "$LOG_FILE"
 
-    OUTPUT=\$(python3 "\$GEN_SCRIPT" "\$newfile")
-    echo "\$OUTPUT" >> "\$LOG_FILE"
+    OUTPUT=$(python3 "$GEN_SCRIPT" "$newfile")
+    echo "$OUTPUT" >> "$LOG_FILE"
 
-    echo -e "New Token Generated on \$HOSTNAME\n\n\$OUTPUT" | mail -s "HI-pfs Token Created" "\$EMAIL"
+    echo -e "New Token Generated on $HOSTNAME\n\n$OUTPUT" | mail -s "HI-pfs Token Created" "$EMAIL"
   fi
 done
 EOSH
@@ -364,11 +362,9 @@ setup_token_server() {
   ln -sfn $REMOTE_ADMIN_DIR/logs /home/$IPFS_USER/token-server/logs
 
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/server.py -o /home/$IPFS_USER/token-server/server.py
-  if [[ "$IS_PRIMARY_NODE" == "y" ]]; then
-    curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o /home/$IPFS_USER/token-server/generate_token.py
-    chmod +x /home/$IPFS_USER/token-server/generate_token.py
-  fi
-  chmod +x /home/$IPFS_USER/token-server/server.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o /home/$IPFS_USER/token-server/generate_token.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/regenerate_token.py -o /home/$IPFS_USER/token-server/regenerate_token.py
+  chmod +x /home/$IPFS_USER/token-server/*.py
   chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
 
   sudo tee /etc/systemd/system/token-server.service > /dev/null <<EOF
