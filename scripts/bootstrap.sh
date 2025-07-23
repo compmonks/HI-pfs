@@ -171,6 +171,10 @@ export IPFS_USER EMAIL NODE_NAME TUNNEL_SUBDOMAIN CLOUDFLARE_DOMAIN IS_PRIMARY_N
 log "🔧 Setting hostname to $NODE_NAME..."
 sudo hostnamectl set-hostname "$NODE_NAME" || log "⚠️ Could not change hostname (may require reboot)."
 
+# Fix sudo resolution issue
+if ! grep -q "$NODE_NAME" /etc/hosts; then
+  echo "127.0.1.1 $NODE_NAME" | sudo tee -a /etc/hosts > /dev/null
+fi
 #-------------#
 # 4. DISPLAY SUMMARY
 #-------------#
