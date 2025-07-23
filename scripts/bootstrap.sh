@@ -119,7 +119,7 @@ while true; do
 done
 read -p "Enter your Cloudflare domain (e.g. example.com): " CLOUDFLARE_DOMAIN
 read -p "Is this the first (primary) node in the network? (y/n): " IS_PRIMARY_NODE
-echo "Available storage devices:" 
+echo "Available storage devices:"
 lsblk -dnpo NAME,SIZE,TYPE | awk '$3=="disk"{printf "  %s (%s)\n", $1, $2}'
 read -p "Enter the device path for your SSD (e.g. /dev/sda): " SSD_DEVICE
 
