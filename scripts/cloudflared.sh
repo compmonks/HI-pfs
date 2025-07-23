@@ -5,7 +5,6 @@
 # Installs cloudflared, creates the tunnel and config, maps DNS and
 # registers a systemd service.
 # ============================================================================
-
 set -euo pipefail
 
 ENV_FILE="/etc/hi-pfs.env"
@@ -71,6 +70,14 @@ handle_existing_tunnel() {
   if echo "$list_output" | grep -q "\"Name\"[[:space:]]*:[[:space:]]*\"$TUNNEL_NAME\""; then
     echo "⚠️ Existing tunnel '$TUNNEL_NAME' detected. Removing to recreate..."
     cloudflared tunnel delete "$TUNNEL_NAME" || true
+    # Also remove any previous credentials file for this tunnel
+    local json_out id_to_remove
+    json_out=$(cloudflared tunnel list --output json -n "$TUNNEL_NAME" 2>/dev/null || true)
+    id_to_remove=$(echo "$json_out" | grep -oE '"ID": *"[0-9a-f-]{36}"' || true)
+    id_to_remove=$(echo "$id_to_remove" | sed -e 's/.*"ID": *"//' -e 's/".*//')
+    if [[ -n "$id_to_remove" ]]; then
+      rm -f "$HOME/.cloudflared/${id_to_remove}.json"
+    fi
     rm -f "$CREDENTIAL_FILE"
   fi
 }
@@ -92,6 +99,14 @@ authenticate_cloudflare() {
 create_tunnel() {
   if [[ -f "$CREDENTIAL_FILE" ]]; then
     echo "✅ Tunnel credentials found at $CREDENTIAL_FILE"
+    # Extract tunnel ID from existing credentials file
+    local existing_id
+    existing_id=$(grep -oE '"TunnelID": *"[0-9a-f-]{36}"' "$CREDENTIAL_FILE" 2>/dev/null | sed -e 's/.*"TunnelID": *"//' -e 's/".*//')
+    if [[ -n "$existing_id" ]]; then
+      TUNNEL_ID="$existing_id"
+    else
+      TUNNEL_ID="$TUNNEL_NAME"
+    fi
     return
   fi
 
@@ -102,13 +117,22 @@ create_tunnel() {
     rm -f "$CREDENTIAL_FILE"
     cloudflared tunnel create "$TUNNEL_NAME"
   fi
+  # Fetch tunnel UUID and update credentials file path
+  TUNNEL_ID=$(cloudflared tunnel info --output json "$TUNNEL_NAME" 2>/dev/null || true)
+  TUNNEL_ID=$(echo "$TUNNEL_ID" | grep -oE '"ID": *"[0-9a-f-]{36}"' || true)
+  TUNNEL_ID=$(echo "$TUNNEL_ID" | sed -e 's/.*"ID": *"//' -e 's/".*//')
+  if [[ -z "$TUNNEL_ID" ]]; then
+    echo "⚠️ Could not determine Tunnel ID. Using name as fallback."
+    TUNNEL_ID="$TUNNEL_NAME"
+  fi
+  CREDENTIAL_FILE="$HOME/.cloudflared/${TUNNEL_ID}.json"
 }
 
 write_config_file() {
   echo "📝 Writing tunnel config to: $CONFIG_FILE"
   sudo mkdir -p "$CONFIG_DIR"
   sudo tee "$CONFIG_FILE" >/dev/null <<EOF2
-tunnel: $TUNNEL_NAME
+tunnel: $TUNNEL_ID
 credentials-file: $CREDENTIAL_FILE
 
 ingress:
