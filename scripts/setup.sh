@@ -454,6 +454,40 @@ EOF
   fi
 }
 
+finalize_setup() {
+  echo -e "\n🔍 Running final diagnostics and tests..."
+
+  echo "→ Checking IPFS repo version..."
+  if ! ipfs repo stat >/dev/null 2>&1; then
+    echo "⚠️ IPFS repo requires migration. Running migration..."
+    sudo systemctl stop ipfs
+    ipfs daemon --migrate=true >/tmp/ipfs_migrate.log 2>&1 &
+    PID=$!
+    sleep 15
+    kill "$PID" >/dev/null 2>&1 || true
+    sudo systemctl start ipfs
+  else
+    echo "✓ IPFS repo is current."
+  fi
+
+  for svc in ipfs cloudflared caddy token-server; do
+    if ! systemctl is-active --quiet "$svc"; then
+      echo "↪ Restarting $svc..."
+      sudo systemctl restart "$svc"
+    fi
+  done
+
+  sudo -u $IPFS_USER bash /home/$IPFS_USER/scripts/diagnostics.sh
+  TMP_TEST_DIR="/tmp/hi-pfs-tests"
+  mkdir -p "$TMP_TEST_DIR"
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/tests/test_server.py -o "$TMP_TEST_DIR/test_server.py"
+  if ! command -v pytest >/dev/null; then
+    echo "Installing pytest for tests..."
+    pip3 install --break-system-packages pytest >/dev/null 2>&1
+  fi
+  sudo -u $IPFS_USER pytest "$TMP_TEST_DIR/test_server.py"
+}
+
 ### 9. EXECUTE
 run_all() {
   echo "\n🚀 Starting HI-pfs Full Node Setup v$SETUP_VERSION"
@@ -465,6 +499,7 @@ run_all() {
   setup_caddy
   setup_token_server
   deploy_cid_sync
+  finalize_setup
   echo -e "\n✅ Node setup complete. Admin dir: $REMOTE_ADMIN_DIR"
 }
 
