@@ -244,12 +244,13 @@ setup_auto_token_generator() {
   WATCH_SCRIPT="/home/$IPFS_USER/scripts/auto_token_watch.sh"
   SERVICE_FILE="/etc/systemd/system/auto-token.service"
   LOG_FILE="/home/$IPFS_USER/ipfs-admin/logs/auto-token.log"
+  WATCH_DIR="/home/$IPFS_USER/ipfs-admin/uploads"
 
   mkdir -p "/home/$IPFS_USER/scripts" "/home/$IPFS_USER/ipfs-admin/uploads" "$(dirname $LOG_FILE)"
 
   cat <<EOSH | tee "$WATCH_SCRIPT" > /dev/null
 #!/bin/bash
-WATCH_DIR="/home/$IPFS_USER/ipfs-admin/uploads"
+WATCH_DIR="$WATCH_DIR"
 LOG_FILE="$LOG_FILE"
 GEN_SCRIPT="/home/$IPFS_USER/token-server/generate_token.py"
 EMAIL="$EMAIL"
