@@ -356,7 +356,8 @@ setup_caddy() {
 setup_token_server() {
   echo "[5/6] Installing token server..."
   mkdir -p /home/$IPFS_USER/token-server
-  mkdir -p $REMOTE_ADMIN_DIR/{zips,tokens,logs}
+  mkdir -p "$REMOTE_ADMIN_DIR"/{zips,tokens,logs}
+  sudo chown -R $IPFS_USER:$IPFS_USER "$REMOTE_ADMIN_DIR"
   echo "${IS_PRIMARY_NODE}" > "$REMOTE_ADMIN_DIR/role.txt"
   ln -sfn $REMOTE_ADMIN_DIR/zips /home/$IPFS_USER/token-server/zips
   ln -sfn $REMOTE_ADMIN_DIR/tokens /home/$IPFS_USER/token-server/tokens
