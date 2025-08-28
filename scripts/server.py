@@ -72,6 +72,12 @@ def save_tokens(tokens):
     except OSError as e:
         report_exception(logger, 'save_tokens', e)
 
+@app.route('/newsletter/confirm/<token>', methods=['GET'], strict_slashes=False)
+def confirm_newsletter(token):
+    if not sanitize_token(token):
+        abort(400, description="Invalid token.")
+    return "Subscription confirmed", 200
+
 @app.route('/download', methods=['GET'])
 def download():
     token = request.args.get('token')

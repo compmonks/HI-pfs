@@ -56,3 +56,8 @@ def test_is_safe_path_rejects_outside(tmp_path):
 def test_load_tokens_missing_returns_empty_dict(tmp_path, monkeypatch):
     monkeypatch.setattr(server, 'TOKENS_FILE', str(tmp_path / 'missing.json'))
     assert server.load_tokens() == {}
+
+
+def test_newsletter_confirm_returns_success():
+    response = server.confirm_newsletter('ValidToken')
+    assert response == ("Subscription confirmed", 200)
