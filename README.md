@@ -84,6 +84,18 @@ account:
 cleanup first. Choose **y** if you are reusing a Pi or recovering from a failed
 install. You can still execute `init.sh` manually if needed.
 
+Back up node configuration and data before choosing cleanup: it still removes
+local application/configuration directories and stops/disables services. SSD
+cleanup now aborts if unmounting fails, the mount path is a symbolic link, or the
+remaining directory is nonempty. It never recursively deletes `/mnt/ipfs`.
+On an abort, inspect the mount and processes using it before retrying; services
+may already be stopped. Do not bypass the refusal with recursive deletion.
+
+Setup accepts existing ext4, exFAT and NTFS filesystems. An unknown, unreadable,
+blank or unsupported filesystem stops setup instead of being reformatted.
+Verify the selected device and backups and prepare the filesystem separately;
+there is no installer flag that authorizes formatting.
+
 ### 3. Cloudflare Tunnel Setup
 Hostnames and subdomains are generated automatically by `bootstrap.sh`. The first
 node uses `ipfs-node-00` and `ipfs0.yourdomain.com`. When adding a new node, the
@@ -196,13 +208,31 @@ A new token is automatically generated once the previous one is used.
 ## Running Tests
 
 ```bash
-pip install pytest
-pytest
+python3 -m pip install -r requirements-dev.txt
+python3 -m pytest
 ```
 
 This runs the unit tests found in the `tests/` directory.
 
-Continuous integration on GitHub also checks all Python files with `pylint`.
+Storage-safety regressions also run without third-party Python packages:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_storage_safety.py' -v
+```
+
+These extract only the storage guard functions from the scripts, mock mount and
+unmount commands, and exercise directory removal only in temporary fixtures.
+They never run an installer, format or mount a disk, or change services.
+PR CI runs these checks and shell syntax validation; hardware integration remains
+a separate, operator-controlled validation step.
+
+Continuous integration checks every tracked Python file with Pylint and runs the
+regression tests on Python 3.8, 3.9 and 3.10 for pushes and pull requests. The
+development requirements install real Flask for import checks and server tests,
+plus a compatible pinned Pylint version for each interpreter. Run the same lint
+check locally with `python3 -m pylint $(git ls-files '*.py')`.
+The two asynchronous process launches have narrowly scoped, documented
+`consider-using-with` exceptions: waiting would block the GUI or download response.
 
 ## Desktop Launcher
 

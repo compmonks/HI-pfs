@@ -8,7 +8,8 @@ from tkinter import messagebox
 TERMINAL = os.environ.get("TERMINAL", "x-terminal-emulator")
 
 INSTALL_CMD = (
-    "curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh -o /tmp/bootstrap.sh"
+    "curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/bootstrap.sh"
+    " -o /tmp/bootstrap.sh"
     " && sudo bash /tmp/bootstrap.sh"
 )
 DIAG_CMD = (
@@ -24,6 +25,8 @@ DELETE_CMD = (
 def run_command(cmd: str) -> None:
     """Open a terminal and execute the provided command."""
     try:
+        # The terminal must outlive this callback; waiting would freeze Tk's UI.
+        # pylint: disable-next=consider-using-with
         subprocess.Popen([TERMINAL, "-e", "bash", "-c", cmd])
     except FileNotFoundError:
         messagebox.showerror("Error", f"Terminal '{TERMINAL}' not found")

@@ -16,6 +16,29 @@ log() {
   [[ "$VERBOSE" == true ]] && echo "$LOG_TAG $1"
 }
 
+# Keep this helper identical in init.sh and bootstrap.sh: both run standalone.
+unmount_ssd() {
+  local mount_point="${1:-/mnt/ipfs}"
+  if [[ -L "$mount_point" ]]; then
+    log "Refusing cleanup: $mount_point is a symbolic link."
+    return 1
+  fi
+  if mountpoint -q -- "$mount_point"; then
+    if ! sudo umount -- "$mount_point"; then
+      log "Refusing cleanup: could not unmount $mount_point. Stop its users and retry."
+      return 1
+    fi
+  fi
+  # Never recursively remove this path. rmdir also refuses a busy mount,
+  # a remounted filesystem, or an unmounted directory containing local data.
+  if [[ -e "$mount_point" ]]; then
+    if ! sudo rmdir -- "$mount_point"; then
+      log "Refusing cleanup: $mount_point is not an empty, unmounted directory."
+      return 1
+    fi
+  fi
+}
+
 log "🧹 Starting HI-pfs node cleanup..."
 
 #--------------------------------------#
@@ -49,8 +72,7 @@ sudo systemctl daemon-reload
 # 2. UNMOUNT SSD
 #--------------------------------------#
 log "→ Attempting to unmount SSD from /mnt/ipfs..."
-sudo umount /mnt/ipfs 2>/dev/null || log "  ⚠️ SSD already unmounted."
-sudo rm -rf /mnt/ipfs
+unmount_ssd || exit 1
 
 #--------------------------------------#
 # 3. CLEAN USER DATA
