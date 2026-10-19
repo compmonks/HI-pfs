@@ -235,6 +235,7 @@ setup_auto_token_generator() {
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/server.py -o server.py
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o generate_token.py
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/regenerate_token.py -o regenerate_token.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/utils.py -o utils.py
 
   chmod +x *.py
   chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
@@ -366,6 +367,7 @@ setup_token_server() {
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/server.py -o /home/$IPFS_USER/token-server/server.py
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/generate_token.py -o /home/$IPFS_USER/token-server/generate_token.py
   curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/regenerate_token.py -o /home/$IPFS_USER/token-server/regenerate_token.py
+  curl -fsSL https://raw.githubusercontent.com/compmonks/HI-pfs/main/scripts/utils.py -o /home/$IPFS_USER/token-server/utils.py
   chmod +x /home/$IPFS_USER/token-server/*.py
   chown -R $IPFS_USER:$IPFS_USER /home/$IPFS_USER/token-server
 

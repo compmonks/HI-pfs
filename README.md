@@ -208,8 +208,8 @@ A new token is automatically generated once the previous one is used.
 ## Running Tests
 
 ```bash
-pip install pytest
-pytest
+python3 -m pip install -r requirements-dev.txt
+python3 -m pytest
 ```
 
 This runs the unit tests found in the `tests/` directory.
@@ -226,7 +226,13 @@ They never run an installer, format or mount a disk, or change services.
 PR CI runs these checks and shell syntax validation; hardware integration remains
 a separate, operator-controlled validation step.
 
-Continuous integration on GitHub also checks all Python files with `pylint`.
+Continuous integration checks every tracked Python file with Pylint and runs the
+regression tests on Python 3.8, 3.9 and 3.10 for pushes and pull requests. The
+development requirements install real Flask for import checks and server tests,
+plus a compatible pinned Pylint version for each interpreter. Run the same lint
+check locally with `python3 -m pylint $(git ls-files '*.py')`.
+The two asynchronous process launches have narrowly scoped, documented
+`consider-using-with` exceptions: waiting would block the GUI or download response.
 
 ## Desktop Launcher
 
