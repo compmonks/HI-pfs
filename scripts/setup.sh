@@ -78,6 +78,21 @@ prerequisites() {
 }
 
 ### 3. SSD MOUNT
+require_supported_filesystem() {
+  local filesystem="$1"
+  local device="$2"
+  case "$filesystem" in
+    ntfs|ext4|exfat)
+      echo "✓ Detected filesystem: $filesystem"
+      ;;
+    *)
+      echo "❌ Refusing to format $device (filesystem: ${filesystem:-unknown})." >&2
+      echo "Verify the device and backups; prepare a supported filesystem separately." >&2
+      return 1
+      ;;
+  esac
+}
+
 setup_mount() {
   echo "💽 Mounting SSD at ${SSD_DEVICE}..."
   DEV="$SSD_DEVICE"
@@ -98,22 +113,7 @@ setup_mount() {
 
     FSTYPE=$(lsblk -no FSTYPE "$PART" | head -n 1)
     [[ -z "$FSTYPE" ]] && FSTYPE=$(blkid -s TYPE -o value "$PART" 2>/dev/null || true)
-    if [[ -z "$FSTYPE" ]]; then
-      echo "→ Formatting $PART as ntfs..."
-      sudo mkfs.ntfs -F "$PART"
-      FSTYPE="ntfs"
-    else
-      case "$FSTYPE" in
-        ntfs|ext4|exfat)
-          echo "✓ Detected filesystem: $FSTYPE"
-          ;;
-        *)
-          echo "⚠️ Unsupported filesystem $FSTYPE. Reformatting as ntfs..."
-          sudo mkfs.ntfs -F "$PART"
-          FSTYPE="ntfs"
-          ;;
-      esac
-    fi
+    require_supported_filesystem "$FSTYPE" "$PART" || return 1
 
     sudo mkdir -p "$MOUNT_POINT"
     if sudo mount -t "$FSTYPE" "$PART" "$MOUNT_POINT"; then
