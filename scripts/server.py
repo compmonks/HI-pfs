@@ -6,6 +6,7 @@ import re
 import subprocess
 
 from flask import Flask, request, send_file, abort
+from werkzeug.exceptions import HTTPException as WerkzeugHTTPException
 
 try:
     from . import utils
@@ -19,7 +20,9 @@ app = Flask(__name__)
 if hasattr(app, 'errorhandler'):
     @app.errorhandler(Exception)
     def handle_exception(e):
-        """Report unexpected request errors through the existing error hook."""
+        """Preserve expected HTTP responses and report unexpected request errors."""
+        if isinstance(e, WerkzeugHTTPException):
+            return e
         utils.report_exception(logger, 'server_exception', e)
         return 'Internal Server Error', 500
 
@@ -77,7 +80,9 @@ def download():
     tokens = load_tokens()
 
     if token not in tokens:
-        log_event(f"REJECTED invalid token: {token}")
+        log_event(
+            f"REJECTED invalid token_id={utils.token_fingerprint(token)}"
+        )
         abort(403, description="Invalid token.")
 
     filename = tokens[token]
@@ -91,7 +96,9 @@ def download():
         log_event(f"ERROR missing ZIP: {filename}")
         abort(404, description="File not found.")
 
-    log_event(f"DOWNLOAD token={token} file={filename}")
+    log_event(
+        f"DOWNLOAD token_id={utils.token_fingerprint(token)} file={filename}"
+    )
 
     # Invalidate token
     del tokens[token]

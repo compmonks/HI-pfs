@@ -205,6 +205,12 @@ https://<node-domain>/download?token=<token>
 ```
 A new token is automatically generated once the previous one is used.
 
+Bearer tokens are printed or emailed only when they must be delivered to the
+recipient. Access logs record a short SHA-256-based `token_id` for correlation,
+not the bearer value itself. This protects future logs; existing logs are not
+rewritten and should be reviewed privately before deciding whether rotation is
+needed.
+
 ## Running Tests
 
 ```bash

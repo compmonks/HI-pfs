@@ -1,5 +1,6 @@
 """Shared logging, token storage and notification helpers."""
 
+import hashlib
 from http.client import HTTPException
 import logging
 import os
@@ -19,6 +20,11 @@ def setup_logger(name: str) -> logging.Logger:
         handler.setFormatter(fmt)
         logger.addHandler(handler)
     return logger
+
+
+def token_fingerprint(token: str) -> str:
+    """Return a stable non-secret identifier for token-related diagnostics."""
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()[:12]
 
 
 def create_github_issue(title: str, body: str) -> bool:

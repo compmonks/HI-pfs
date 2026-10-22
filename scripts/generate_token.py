@@ -38,7 +38,10 @@ def register_token(zip_filename, timestamp, action):
     save_tokens(tokens)
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a', encoding='utf-8') as log_file:
-        log_file.write(f"[{timestamp}] {action} token={token} for file={zip_filename}\n")
+        token_id = utils.token_fingerprint(token)
+        log_file.write(
+            f"[{timestamp}] {action} token_id={token_id} for file={zip_filename}\n"
+        )
     return token
 
 

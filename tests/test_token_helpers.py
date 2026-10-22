@@ -30,6 +30,34 @@ class TokenHelperTests(unittest.TestCase):
                 utils.load_token_registry(path, regenerate_token.logger), {'abc': 'café.zip'},
             )
 
+    def test_token_creation_log_uses_non_secret_identifier(self):
+        """The registry keeps the bearer token while the access log does not."""
+        token = 'DummyBearerToken_123'
+        with tempfile.TemporaryDirectory() as root, contextlib.ExitStack() as stack:
+            base = Path(root)
+            stack.enter_context(patch.object(
+                generate_token, 'TOKENS_FILE', str(base / 'tokens' / 'tokens.json'),
+            ))
+            stack.enter_context(patch.object(
+                generate_token, 'LOG_FILE', str(base / 'logs' / 'access.log'),
+            ))
+            stack.enter_context(patch.object(
+                generate_token.secrets, 'token_urlsafe', return_value=token,
+            ))
+
+            self.assertEqual(
+                generate_token.register_token('archive.zip', '2030-01-01', 'Generated'),
+                token,
+            )
+
+            access_log = (base / 'logs' / 'access.log').read_text(encoding='utf-8')
+            registry = json.loads(
+                (base / 'tokens' / 'tokens.json').read_text(encoding='utf-8')
+            )
+            self.assertIn(token, registry)
+            self.assertNotIn(token, access_log)
+            self.assertIn(utils.token_fingerprint(token), access_log)
+
     def test_missing_and_corrupt_registry(self):
         """Missing files stay empty; malformed files retain logging and reporting."""
         logger = Mock()
