@@ -38,3 +38,24 @@ def test_load_tokens_missing_returns_empty_dict(tmp_path, monkeypatch):
     """A missing registry retains the empty-registry fallback."""
     monkeypatch.setattr(server, 'TOKENS_FILE', str(tmp_path / 'missing.json'))
     assert server.load_tokens() == {}
+
+
+def test_http_abort_status_is_not_rewritten_as_internal_error():
+    """Expected client errors retain their intended HTTP status."""
+    response = server.app.test_client().get('/download')
+    assert response.status_code == 400
+
+
+def test_rejected_token_log_uses_non_secret_identifier(monkeypatch):
+    """An unknown bearer token must not be persisted in request logs."""
+    token = 'UnknownBearerToken_123'
+    events = []
+    monkeypatch.setattr(server, 'load_tokens', lambda: {})
+    monkeypatch.setattr(server, 'log_event', events.append)
+
+    response = server.app.test_client().get(f'/download?token={token}')
+
+    assert response.status_code == 403
+    assert len(events) == 1
+    assert token not in events[0]
+    assert server.utils.token_fingerprint(token) in events[0]
