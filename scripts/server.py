@@ -96,13 +96,14 @@ def download():
         log_event(f"ERROR missing ZIP: {filename}")
         abort(404, description="File not found.")
 
+    # Persist invalidation before serving the file. A failed write raises and
+    # returns HTTP 500, leaving the on-disk token available for a safe retry.
+    del tokens[token]
+    save_tokens(tokens)
+
     log_event(
         f"DOWNLOAD token_id={utils.token_fingerprint(token)} file={filename}"
     )
-
-    # Invalidate token
-    del tokens[token]
-    save_tokens(tokens)
 
     # Regenerate token and send email
     email = get_email()
