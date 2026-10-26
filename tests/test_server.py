@@ -59,3 +59,25 @@ def test_rejected_token_log_uses_non_secret_identifier(monkeypatch):
     assert len(events) == 1
     assert token not in events[0]
     assert server.utils.token_fingerprint(token) in events[0]
+
+
+def test_download_fails_closed_when_registry_write_fails(monkeypatch, tmp_path):
+    """A reusable on-disk token must not authorize a download after write failure."""
+    token = 'ReusableToken_123'
+    zips = tmp_path / 'zips'
+    zips.mkdir()
+    (zips / 'archive.zip').write_bytes(b'archive')
+    events = []
+
+    monkeypatch.setattr(server, 'ZIPS_DIR', str(zips))
+    monkeypatch.setattr(server, 'load_tokens', lambda: {token: 'archive.zip'})
+    monkeypatch.setattr(
+        server, 'save_tokens', lambda _tokens: (_ for _ in ()).throw(OSError('read-only')),
+    )
+    monkeypatch.setattr(server, 'log_event', events.append)
+    monkeypatch.setattr(server.utils, 'report_exception', lambda *_args: None)
+
+    response = server.app.test_client().get(f'/download?token={token}')
+
+    assert response.status_code == 500
+    assert not events

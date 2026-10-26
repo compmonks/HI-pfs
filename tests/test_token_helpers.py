@@ -71,13 +71,35 @@ class TokenHelperTests(unittest.TestCase):
             callback.assert_called_once()
             report.assert_called_once()
 
-    def test_registry_write_failure_is_reported(self):
-        """Write failures retain the existing reporting policy."""
+    def test_registry_write_failure_is_reported_and_raised(self):
+        """Callers must stop when the registry cannot be persisted."""
         with tempfile.TemporaryDirectory() as root:
-            with patch('builtins.open', side_effect=PermissionError('read-only')):
+            with patch.object(
+                utils.tempfile, 'mkstemp', side_effect=PermissionError('read-only'),
+            ):
                 with patch.object(utils, 'report_exception') as report:
-                    utils.save_token_registry(str(Path(root) / 'tokens.json'), {}, Mock())
+                    with self.assertRaises(PermissionError):
+                        utils.save_token_registry(
+                            str(Path(root) / 'tokens.json'), {}, Mock(),
+                        )
             report.assert_called_once()
+
+    def test_registry_replace_failure_preserves_previous_file(self):
+        """A failed atomic replace must retain the last valid registry."""
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / 'tokens.json'
+            path.write_text('{"old": "archive.zip"}', encoding='utf-8')
+            with patch.object(utils.os, 'replace', side_effect=OSError('disk error')):
+                with patch.object(utils, 'report_exception'):
+                    with self.assertRaises(OSError):
+                        utils.save_token_registry(
+                            str(path), {'new': 'other.zip'}, Mock(),
+                        )
+            self.assertEqual(
+                json.loads(path.read_text(encoding='utf-8')),
+                {'old': 'archive.zip'},
+            )
+            self.assertEqual(list(Path(root).glob('.tokens-*.tmp')), [])
 
     def test_renewal_email_is_data_not_shell_code(self):
         """Filename and recipient punctuation cannot become shell commands."""
@@ -115,6 +137,24 @@ class TokenHelperTests(unittest.TestCase):
             with zipfile.ZipFile(base / 'zips' / filename) as archive:
                 self.assertEqual(archive.namelist(), ['hello.txt'])
                 self.assertEqual(archive.read('hello.txt'), b'hello')
+
+    def test_registry_failure_keeps_source(self):
+        """An unpersisted token must never permit source-folder deletion."""
+        with tempfile.TemporaryDirectory() as root, contextlib.ExitStack() as stack:
+            folder = Path(root) / 'source'
+            folder.mkdir()
+            (folder / 'hello.txt').write_text('hello', encoding='utf-8')
+            stack.enter_context(patch.object(generate_token, 'ZIPS_DIR', root))
+            stack.enter_context(patch.object(
+                generate_token, 'register_token', side_effect=OSError('read-only'),
+            ))
+            report = stack.enter_context(patch.object(utils, 'report_exception'))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+
+            generate_token.generate(str(folder))
+
+            self.assertTrue(folder.exists())
+            report.assert_called_once()
 
     def test_archive_failure_keeps_source(self):
         """A ZIP error must not delete the original folder or register a token."""

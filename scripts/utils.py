@@ -6,6 +6,7 @@ import logging
 import os
 import json
 import subprocess
+import tempfile
 import traceback
 from urllib import request
 
@@ -75,13 +76,28 @@ def load_token_registry(path, logger, on_error=None):
 
 
 def save_token_registry(path, tokens, logger):
-    """Write the registry using the existing error-reporting policy."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    """Atomically replace the registry and propagate persistence failures."""
+    directory = os.path.dirname(path) or '.'
+    temp_path = None
     try:
-        with open(path, 'w', encoding='utf-8') as token_file:
+        os.makedirs(directory, exist_ok=True)
+        descriptor, temp_path = tempfile.mkstemp(
+            prefix='.tokens-', suffix='.tmp', dir=directory,
+        )
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as token_file:
             json.dump(tokens, token_file, indent=2)
-    except OSError as exc:
+            token_file.flush()
+            os.fsync(token_file.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    except (OSError, TypeError, ValueError) as exc:
+        if temp_path is not None:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
         report_exception(logger, 'save_tokens', exc)
+        raise
 
 
 def send_renewal_email(token, zip_filename, email):
