@@ -80,4 +80,4 @@ def test_download_fails_closed_when_registry_write_fails(monkeypatch, tmp_path):
     response = server.app.test_client().get(f'/download?token={token}')
 
     assert response.status_code == 500
-    assert events == []
+    assert not events
